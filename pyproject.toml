@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "broker-ops-report"
+version = "0.1.0"
+description = "Static broker operations exception report generator demo."
+requires-python = ">=3.11"
+authors = [
+  { name = "quantfin33" }
+]
+dependencies = []
+
+[project.scripts]
+broker-ops-report = "broker_ops_report.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+broker_ops_report = ["py.typed"]
