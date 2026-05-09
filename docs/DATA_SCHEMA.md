@@ -1,6 +1,6 @@
 # Broker Ops Static Data Schema
 
-Last updated: 2026-05-08
+Last updated: 2026-05-09
 
 ## Purpose
 
@@ -24,8 +24,8 @@ Some rows intentionally leave lifecycle timestamps blank so later validation and
 | Column | Expected type/format | Purpose |
 | --- | --- | --- |
 | `event_id` | string, unique fixture row id | Stable row identifier for tests and audit notes. |
-| `client_order_id` | synthetic string | Client-side order id. Some rows intentionally duplicate this value. |
-| `server_order_id` | synthetic string or blank | Server-side order id. Some rows intentionally duplicate or omit this value. |
+| `client_order_id` | synthetic string | Client-side order id. Duplicate examples are covered by temporary validation test fixtures, not the primary sample CSV. |
+| `server_order_id` | synthetic string or blank | Server-side order id. Blank values are allowed for pre-transmission rows. Duplicate examples are covered by temporary validation test fixtures. |
 | `timestamp_utc` | UTC timestamp text | Primary event timestamp. |
 | `platform` | synthetic platform label | Demo source channel such as `demo_web`, `demo_mobile`, or `demo_desktop`. |
 | `account_id_hash` | synthetic hash-like string | Fake account reference. No real account data is included. |
@@ -69,6 +69,18 @@ Some rows intentionally leave lifecycle timestamps blank so later validation and
 - `disconnected`
 - `not_applicable`
 
+## Lifecycle Consistency Notes
+
+The primary order-events CSV is expected to pass structural lifecycle validation.
+
+- `received` and `pending_new` are pre-transmission states.
+- `transmitted`, `new`, `partially_filled`, `filled`, `rejected`, `failed`, `cancelled`, and `expired` require `order_received_time_utc` and `order_transmitted_time_utc`.
+- `partially_filled`, `filled`, `rejected`, `failed`, `cancelled`, and `expired` require `final_status_time_utc`.
+- `partially_filled` and `filled` require `executed_price`.
+- `rejected`, `cancelled`, and `expired` may have a blank `executed_price`.
+- `order_transmitted_time_utc` must not be earlier than `order_received_time_utc`.
+- `final_status_time_utc` must not be earlier than `order_received_time_utc` or `order_transmitted_time_utc`.
+
 ## Intentionally Imperfect Order Rows
 
 These rows are deliberate fixture cases for later tests:
@@ -84,9 +96,9 @@ These rows are deliberate fixture cases for later tests:
 | `evt_0007` | Failed bridge status. |
 | `evt_0008` | Disconnected bridge status. |
 | `evt_0010` | Unresolved pending order. |
-| `evt_0011` and `evt_0012` | Duplicate `client_order_id`. |
+| `evt_0011` and `evt_0012` | Structurally valid XAUUSD rows retained after duplicate client-order coverage moved to temporary validation test fixtures. |
 | `evt_0013` | Structurally valid EURUSD row retained after missing-field coverage moved to temporary validation test fixtures. |
-| `evt_0014` and `evt_0015` | Duplicate `server_order_id`. |
+| `evt_0014` and `evt_0015` | Structurally valid EURUSD rows retained after duplicate server-order coverage moved to temporary validation test fixtures. |
 | `evt_0016` and `evt_0019` | Additional XAUUSD rejections for abnormal symbol activity candidates. |
 | `evt_0001` through `evt_0006` | Market-event overlap candidates near the demo CPI event. |
 

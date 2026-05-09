@@ -183,8 +183,8 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
 - [x] Validate market-event required columns and related symbols.
 - [x] Scan input fixtures for obvious secret/live credential patterns.
 - [ ] Normalize timestamps to UTC.
-- [ ] Validate lifecycle consistency.
-- [ ] Detect duplicate `client_order_id` and `server_order_id`.
+- [x] Validate lifecycle consistency.
+- [x] Detect duplicate `client_order_id` and `server_order_id`.
 - [ ] Detect exception types:
   - received not transmitted;
   - transmitted no final status;

@@ -147,6 +147,182 @@ class CsvValidationTests(unittest.TestCase):
 
         self.assert_validation_fails_with(result, "CSV file does not exist")
 
+    def test_duplicate_client_order_id_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_orders = Path(tmpdir) / "bad_orders.csv"
+            rows = [
+                dict(self.order_rows[0], event_id="evt_bad_1", client_order_id="cl_duplicate"),
+                dict(self.order_rows[1], event_id="evt_bad_2", client_order_id="cl_duplicate"),
+            ]
+            write_rows(bad_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(bad_orders, MARKET_EVENTS)
+
+        self.assert_validation_fails_with(result, "duplicate client_order_id")
+        self.assert_validation_fails_with(result, "cl_duplicate")
+        self.assert_validation_fails_with(result, "evt_bad_1")
+        self.assert_validation_fails_with(result, "evt_bad_2")
+
+    def test_duplicate_server_order_id_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_orders = Path(tmpdir) / "bad_orders.csv"
+            rows = [
+                dict(self.order_rows[0], event_id="evt_bad_1", server_order_id="sv_duplicate"),
+                dict(self.order_rows[1], event_id="evt_bad_2", server_order_id="sv_duplicate"),
+            ]
+            write_rows(bad_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(bad_orders, MARKET_EVENTS)
+
+        self.assert_validation_fails_with(result, "duplicate server_order_id")
+        self.assert_validation_fails_with(result, "sv_duplicate")
+
+    def test_duplicate_blank_server_order_id_does_not_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            good_orders = Path(tmpdir) / "good_orders.csv"
+            rows = [
+                dict(self.order_rows[0], event_id="evt_blank_1", server_order_id=""),
+                dict(self.order_rows[1], event_id="evt_blank_2", server_order_id=""),
+            ]
+            write_rows(good_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(good_orders, MARKET_EVENTS)
+
+        self.assertTrue(result.ok, [issue.format() for issue in result.issues])
+
+    def test_transmitted_time_before_received_time_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_orders = Path(tmpdir) / "bad_orders.csv"
+            rows = [
+                dict(
+                    self.order_rows[0],
+                    order_received_time_utc="2026-05-07T12:28:10Z",
+                    order_transmitted_time_utc="2026-05-07T12:28:09Z",
+                )
+            ]
+            write_rows(bad_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(bad_orders, MARKET_EVENTS)
+
+        self.assert_validation_fails_with(
+            result,
+            "order_transmitted_time_utc cannot be earlier than order_received_time_utc",
+        )
+
+    def test_final_status_before_received_time_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_orders = Path(tmpdir) / "bad_orders.csv"
+            rows = [
+                dict(
+                    self.order_rows[0],
+                    order_received_time_utc="2026-05-07T12:28:10Z",
+                    final_status_time_utc="2026-05-07T12:28:09Z",
+                )
+            ]
+            write_rows(bad_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(bad_orders, MARKET_EVENTS)
+
+        self.assert_validation_fails_with(
+            result,
+            "final_status_time_utc cannot be earlier than order_received_time_utc",
+        )
+
+    def test_final_status_before_transmitted_time_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_orders = Path(tmpdir) / "bad_orders.csv"
+            rows = [
+                dict(
+                    self.order_rows[0],
+                    order_transmitted_time_utc="2026-05-07T12:28:10Z",
+                    final_status_time_utc="2026-05-07T12:28:09Z",
+                )
+            ]
+            write_rows(bad_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(bad_orders, MARKET_EVENTS)
+
+        self.assert_validation_fails_with(
+            result,
+            "final_status_time_utc cannot be earlier than order_transmitted_time_utc",
+        )
+
+    def test_filled_without_executed_price_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_orders = Path(tmpdir) / "bad_orders.csv"
+            rows = [dict(self.order_rows[0], status="filled", executed_price="")]
+            write_rows(bad_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(bad_orders, MARKET_EVENTS)
+
+        self.assert_validation_fails_with(result, "status 'filled' requires executed_price")
+
+    def test_partially_filled_without_executed_price_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_orders = Path(tmpdir) / "bad_orders.csv"
+            rows = [dict(self.order_rows[1], status="partially_filled", executed_price="")]
+            write_rows(bad_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(bad_orders, MARKET_EVENTS)
+
+        self.assert_validation_fails_with(
+            result,
+            "status 'partially_filled' requires executed_price",
+        )
+
+    def test_filled_without_final_status_time_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_orders = Path(tmpdir) / "bad_orders.csv"
+            rows = [dict(self.order_rows[0], status="filled", final_status_time_utc="")]
+            write_rows(bad_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(bad_orders, MARKET_EVENTS)
+
+        self.assert_validation_fails_with(result, "status 'filled' requires final_status_time_utc")
+
+    def test_new_without_transmitted_time_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_orders = Path(tmpdir) / "bad_orders.csv"
+            rows = [
+                dict(
+                    self.order_rows[0],
+                    status="new",
+                    order_transmitted_time_utc="",
+                    final_status_time_utc="",
+                )
+            ]
+            write_rows(bad_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(bad_orders, MARKET_EVENTS)
+
+        self.assert_validation_fails_with(
+            result,
+            "status 'new' requires order_transmitted_time_utc",
+        )
+
+    def test_rejected_without_executed_price_passes_lifecycle_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            good_orders = Path(tmpdir) / "good_orders.csv"
+            rows = [dict(self.order_rows[4], status="rejected", executed_price="")]
+            write_rows(good_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(good_orders, MARKET_EVENTS)
+
+        self.assertTrue(result.ok, [issue.format() for issue in result.issues])
+
+    def test_cancelled_and_expired_without_executed_price_pass_lifecycle_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            good_orders = Path(tmpdir) / "good_orders.csv"
+            rows = [
+                dict(self.order_rows[16], status="cancelled", executed_price=""),
+                dict(self.order_rows[17], status="expired", executed_price=""),
+            ]
+            write_rows(good_orders, ORDER_EVENT_HEADERS, rows)
+
+            result = validate_inputs(good_orders, MARKET_EVENTS)
+
+        self.assertTrue(result.ok, [issue.format() for issue in result.issues])
+
     def test_validate_inputs_cli_returns_zero_for_current_fixtures(self) -> None:
         result = self.run_cli(
             "validate-inputs",

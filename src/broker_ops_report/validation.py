@@ -12,14 +12,18 @@ from typing import Iterable
 from .schema import (
     ALLOWED_BRIDGE_STATUSES,
     ALLOWED_STATUSES,
+    EXECUTED_PRICE_REQUIRED_STATUSES,
+    FINAL_STATUS_REQUIRED_STATUSES,
     MARKET_EVENT_HEADERS,
     MARKET_EVENT_TIMESTAMP_FIELDS,
     ORDER_EVENT_HEADERS,
     ORDER_NUMERIC_FIELDS,
     ORDER_TIMESTAMP_FIELDS,
+    PRE_TRANSMISSION_STATUSES,
     REQUIRED_MARKET_EVENT_FIELDS,
     REQUIRED_ORDER_CORE_FIELDS,
     SECRET_SCAN_PATTERNS,
+    TRANSMISSION_REQUIRED_STATUSES,
 )
 
 
@@ -67,6 +71,7 @@ def validate_inputs(order_path: str | Path, market_events_path: str | Path) -> V
     if order_rows is not None:
         result.order_rows = len(order_rows)
         _validate_order_rows(order_file, order_rows, result)
+        _validate_duplicate_order_ids(order_file, order_rows, result)
     if market_rows is not None:
         result.market_event_rows = len(market_rows)
         _validate_market_event_rows(market_file, market_rows, result)
@@ -141,6 +146,7 @@ def _validate_order_rows(
         )
         _validate_timestamp_fields(path, row, row_number, ORDER_TIMESTAMP_FIELDS, result)
         _validate_numeric_fields(path, row, row_number, ORDER_NUMERIC_FIELDS, result)
+        _validate_lifecycle_consistency(path, row, row_number, result)
 
 
 def _validate_market_event_rows(
@@ -151,6 +157,34 @@ def _validate_market_event_rows(
     for row_number, row in _numbered_rows(rows):
         _validate_required_fields(path, row, row_number, REQUIRED_MARKET_EVENT_FIELDS, result)
         _validate_timestamp_fields(path, row, row_number, MARKET_EVENT_TIMESTAMP_FIELDS, result)
+
+
+def _validate_duplicate_order_ids(
+    path: Path,
+    rows: list[dict[str, str]],
+    result: ValidationResult,
+) -> None:
+    for field_name in ("client_order_id", "server_order_id"):
+        seen: dict[str, list[tuple[int, str]]] = {}
+        for row_number, row in _numbered_rows(rows):
+            value = _value(row, field_name)
+            if not value:
+                continue
+            seen.setdefault(value, []).append((row_number, _value(row, "event_id") or "<missing>"))
+
+        for value, locations in seen.items():
+            if len(locations) < 2:
+                continue
+            formatted_locations = ", ".join(
+                f"row {row_number} ({event_id})" for row_number, event_id in locations
+            )
+            result.issues.append(
+                ValidationIssue(
+                    str(path),
+                    f"duplicate {field_name} {value!r} appears in {formatted_locations}",
+                    column=field_name,
+                )
+            )
 
 
 def _numbered_rows(rows: Iterable[dict[str, str]]) -> Iterable[tuple[int, dict[str, str]]]:
@@ -241,15 +275,112 @@ def _validate_numeric_fields(
                 )
 
 
+def _validate_lifecycle_consistency(
+    path: Path,
+    row: dict[str, str],
+    row_number: int,
+    result: ValidationResult,
+) -> None:
+    status = _value(row, "status")
+    received_time = _value(row, "order_received_time_utc")
+    transmitted_time = _value(row, "order_transmitted_time_utc")
+    final_time = _value(row, "final_status_time_utc")
+    executed_price = _value(row, "executed_price")
+
+    if status in PRE_TRANSMISSION_STATUSES | TRANSMISSION_REQUIRED_STATUSES and not received_time:
+        _add_lifecycle_issue(
+            path,
+            row_number,
+            "order_received_time_utc",
+            f"status {status!r} requires order_received_time_utc",
+            result,
+        )
+    if status in TRANSMISSION_REQUIRED_STATUSES and not transmitted_time:
+        _add_lifecycle_issue(
+            path,
+            row_number,
+            "order_transmitted_time_utc",
+            f"status {status!r} requires order_transmitted_time_utc",
+            result,
+        )
+    if status in FINAL_STATUS_REQUIRED_STATUSES and not final_time:
+        _add_lifecycle_issue(
+            path,
+            row_number,
+            "final_status_time_utc",
+            f"status {status!r} requires final_status_time_utc",
+            result,
+        )
+    if status in EXECUTED_PRICE_REQUIRED_STATUSES and not executed_price:
+        _add_lifecycle_issue(
+            path,
+            row_number,
+            "executed_price",
+            f"status {status!r} requires executed_price",
+            result,
+        )
+
+    parsed_received = _parse_utc_timestamp(received_time)
+    parsed_transmitted = _parse_utc_timestamp(transmitted_time)
+    parsed_final = _parse_utc_timestamp(final_time)
+
+    if parsed_received and parsed_transmitted and parsed_transmitted < parsed_received:
+        _add_lifecycle_issue(
+            path,
+            row_number,
+            "order_transmitted_time_utc",
+            "order_transmitted_time_utc cannot be earlier than order_received_time_utc",
+            result,
+        )
+    if parsed_received and parsed_final and parsed_final < parsed_received:
+        _add_lifecycle_issue(
+            path,
+            row_number,
+            "final_status_time_utc",
+            "final_status_time_utc cannot be earlier than order_received_time_utc",
+            result,
+        )
+    if parsed_transmitted and parsed_final and parsed_final < parsed_transmitted:
+        _add_lifecycle_issue(
+            path,
+            row_number,
+            "final_status_time_utc",
+            "final_status_time_utc cannot be earlier than order_transmitted_time_utc",
+            result,
+        )
+
+
+def _add_lifecycle_issue(
+    path: Path,
+    row_number: int,
+    field_name: str,
+    message: str,
+    result: ValidationResult,
+) -> None:
+    result.issues.append(
+        ValidationIssue(
+            str(path),
+            message,
+            row_number=row_number,
+            column=field_name,
+        )
+    )
+
+
 def _is_utc_timestamp(value: str) -> bool:
+    return _parse_utc_timestamp(value) is not None
+
+
+def _parse_utc_timestamp(value: str) -> datetime | None:
+    if not value:
+        return None
     if not value.endswith("Z"):
-        return False
+        return None
     normalized = value[:-1] + "+00:00"
     try:
-        datetime.fromisoformat(normalized)
+        return datetime.fromisoformat(normalized)
     except ValueError:
-        return False
-    return True
+        return None
 
 
 def _scan_for_secret_patterns(path: Path, result: ValidationResult) -> None:

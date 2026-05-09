@@ -94,6 +94,36 @@ ALLOWED_BRIDGE_STATUSES = {
     "not_applicable",
 }
 
+PRE_TRANSMISSION_STATUSES = {
+    "received",
+    "pending_new",
+}
+
+TRANSMISSION_REQUIRED_STATUSES = {
+    "transmitted",
+    "new",
+    "partially_filled",
+    "filled",
+    "rejected",
+    "failed",
+    "cancelled",
+    "expired",
+}
+
+FINAL_STATUS_REQUIRED_STATUSES = {
+    "partially_filled",
+    "filled",
+    "rejected",
+    "failed",
+    "cancelled",
+    "expired",
+}
+
+EXECUTED_PRICE_REQUIRED_STATUSES = {
+    "partially_filled",
+    "filled",
+}
+
 SECRET_SCAN_PATTERNS = [
     r"api[_-]?key",
     r"secret",
