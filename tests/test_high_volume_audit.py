@@ -88,6 +88,79 @@ class HighVolumeSyntheticAuditTests(unittest.TestCase):
             self.assertFalse(LIVE_INTEGRATIONS_ALLOWED)
             self.assertEqual(NETWORK_DEPENDENCIES, ())
 
+    def test_streaming_batches_audit_flowing_synthetic_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            market_path = tmp_path / "synthetic_market_events.csv"
+            cumulative_order_path = tmp_path / "cumulative_stream_orders.csv"
+            _write_csv(market_path, MARKET_EVENT_HEADERS, _build_market_event_rows())
+
+            cumulative_rows: list[dict[str, str]] = []
+            cumulative_severity_counts: Counter[str] = Counter()
+            cumulative_exception_count = 0
+
+            for batch_index in range(10):
+                batch_rows = _build_streaming_batch_rows(batch_index)
+                cumulative_rows.extend(batch_rows)
+                batch_order_path = tmp_path / f"stream_batch_{batch_index:02d}.csv"
+                batch_output_dir = tmp_path / "stream_outputs" / f"batch_{batch_index:02d}"
+                _write_csv(batch_order_path, ORDER_EVENT_HEADERS, batch_rows)
+
+                validation = validate_inputs(batch_order_path, market_path)
+                self.assertTrue(validation.ok, [issue.format() for issue in validation.issues])
+                self.assertEqual(validation.order_rows, 100)
+
+                batch_exceptions = detect_exceptions(batch_order_path)
+                batch_severity_counts = Counter(exception.severity for exception in batch_exceptions)
+                self.assertEqual(len(batch_exceptions), 110)
+                self.assertEqual(batch_severity_counts["Critical"], 45)
+                self.assertEqual(batch_severity_counts["Warning"], 65)
+                self.assertEqual(batch_severity_counts["Info"], 0)
+                cumulative_exception_count += len(batch_exceptions)
+                cumulative_severity_counts.update(batch_severity_counts)
+
+                exception_log = write_order_exception_log(batch_order_path, market_path, batch_output_dir)
+                shift_summary = write_broker_ops_shift_summary(batch_order_path, market_path, batch_output_dir)
+                symbol_stats = write_by_symbol_trading_stats(batch_order_path, market_path, batch_output_dir)
+                shift_report = write_broker_ops_shift_report(batch_order_path, market_path, batch_output_dir)
+
+                self.assertEqual(exception_log.exception_count, 110)
+                self.assertEqual(shift_summary.exception_count, 110)
+                self.assertEqual(symbol_stats.order_count, 100)
+                self.assertEqual(symbol_stats.exception_count, 110)
+                self.assertEqual(shift_report.exception_count, 110)
+
+                with exception_log.output_path.open(newline="", encoding="utf-8") as handle:
+                    exception_rows = list(csv.DictReader(handle))
+                self.assertEqual(len(exception_rows), 110)
+
+                summary = json.loads((batch_output_dir / SHIFT_SUMMARY_FILENAME).read_text(encoding="utf-8"))
+                self.assertEqual(summary["exception_summary"]["total_exceptions"], 110)
+                self.assertEqual(summary["severity_breakdown"], {"Critical": 45, "Warning": 65, "Info": 0})
+
+                with (batch_output_dir / SYMBOL_STATS_FILENAME).open(newline="", encoding="utf-8") as handle:
+                    symbol_rows = list(csv.DictReader(handle))
+                self.assertEqual(sum(int(row["total_orders"]) for row in symbol_rows), 100)
+                self.assertEqual(sum(int(row["exception_count"]) for row in symbol_rows), 110)
+                self.assertTrue((batch_output_dir / SHIFT_REPORT_FILENAME).is_file())
+                self.assertEqual(list(batch_output_dir.glob("*.xlsx")), [])
+                self.assertEqual(list(batch_output_dir.glob("*.html")), [])
+
+            _write_csv(cumulative_order_path, ORDER_EVENT_HEADERS, cumulative_rows)
+            cumulative_validation = validate_inputs(cumulative_order_path, market_path)
+            self.assertTrue(cumulative_validation.ok, [issue.format() for issue in cumulative_validation.issues])
+            self.assertEqual(cumulative_validation.order_rows, 1000)
+
+            cumulative_exceptions = detect_exceptions(cumulative_order_path)
+            self.assertEqual(len(cumulative_rows), 1000)
+            self.assertEqual(cumulative_exception_count, 1100)
+            self.assertEqual(len(cumulative_exceptions), 1100)
+            self.assertEqual(cumulative_severity_counts["Critical"], 450)
+            self.assertEqual(cumulative_severity_counts["Warning"], 650)
+            self.assertEqual(cumulative_severity_counts["Info"], 0)
+            self.assertFalse(LIVE_INTEGRATIONS_ALLOWED)
+            self.assertEqual(NETWORK_DEPENDENCIES, ())
+
 
 def _write_csv(path: Path, headers: list[str], rows: list[dict[str, str]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
@@ -168,6 +241,73 @@ def _build_order_rows(batch_count: int) -> list[dict[str, str]]:
                 _order_row(base + 6, "USDJPY", "fx", "filled", "ok", "4500", executed=True, final=True),
             ]
         )
+    return rows
+
+
+def _build_streaming_batch_rows(batch_index: int) -> list[dict[str, str]]:
+    start = batch_index * 100
+    rows: list[dict[str, str]] = []
+    rows.extend(
+        _order_row(start + index, "EURUSD", "fx", "filled", "ok", "120", executed=True, final=True)
+        for index in range(1, 21)
+    )
+    rows.extend(
+        _order_row(
+            start + index,
+            "XAUUSD",
+            "metal",
+            "received",
+            "not_applicable",
+            "0",
+            transmitted=False,
+            final=False,
+        )
+        for index in range(21, 36)
+    )
+    rows.extend(
+        _order_row(
+            start + index,
+            "BTCUSD",
+            "crypto",
+            "transmitted",
+            "delayed",
+            "500",
+            final=False,
+        )
+        for index in range(36, 51)
+    )
+    rows.extend(
+        _order_row(
+            start + index,
+            "XAUUSD",
+            "metal",
+            "rejected",
+            "ok",
+            "320",
+            executed=False,
+            final=True,
+            reject_reason="",
+        )
+        for index in range(51, 66)
+    )
+    rows.extend(
+        _order_row(
+            start + index,
+            "USOIL",
+            "energy",
+            "failed",
+            "failed",
+            "3500",
+            executed=False,
+            final=True,
+            reject_reason="downstream timeout",
+        )
+        for index in range(66, 81)
+    )
+    rows.extend(
+        _order_row(start + index, "USDJPY", "fx", "filled", "ok", "4500", executed=True, final=True)
+        for index in range(81, 101)
+    )
     return rows
 
 
