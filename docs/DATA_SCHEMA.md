@@ -104,16 +104,16 @@ These rows are deliberate fixture cases for later tests:
 
 ## Phase 3C Exception Type Definitions
 
-Phase 3C detects broker exception types from schema-valid static order rows only. Phase 3D adds deterministic severity classification for those same exception types. The project still does not attach recommended actions, aggregate by symbol, match market events, or generate report files.
+Phase 3C detects broker exception types from schema-valid static order rows only. Phase 3D adds deterministic severity classification for those same exception types. Phase 3E adds deterministic recommended actions. The project still does not aggregate by symbol, match market events, or generate report files.
 
-| Exception type | Severity | Deterministic rule |
-| --- | --- | --- |
-| `received_not_transmitted` | `Critical` | `status` is `received` or `pending_new`, `order_received_time_utc` is present, and `order_transmitted_time_utc` is blank. |
-| `transmitted_no_final_status` | `Critical` | `status` is `transmitted` or `new`, `order_transmitted_time_utc` is present, and `final_status_time_utc` is blank. |
-| `bridge_failed_or_disconnected` | `Critical` | `bridge_status` is `failed` or `disconnected`. |
-| `rejected_without_reason` | `Warning` | `status` is `rejected` and `reject_reason` is blank. |
-| `high_latency` | `Warning` | `latency_ms` is numeric and greater than `2000`. |
-| `pending_follow_up` | `Warning` | `status` is `pending_new`, `transmitted`, or `new`, and `final_status_time_utc` is blank. |
+| Exception type | Severity | Recommended action | Deterministic rule |
+| --- | --- | --- | --- |
+| `received_not_transmitted` | `Critical` | Review platform queue/routing state and confirm whether the order should be transmitted, cancelled, or escalated. | `status` is `received` or `pending_new`, `order_received_time_utc` is present, and `order_transmitted_time_utc` is blank. |
+| `transmitted_no_final_status` | `Critical` | Check downstream execution/bridge response and follow up until a final fill, reject, cancel, fail, or expiry status is recorded. | `status` is `transmitted` or `new`, `order_transmitted_time_utc` is present, and `final_status_time_utc` is blank. |
+| `bridge_failed_or_disconnected` | `Critical` | Escalate bridge or liquidity-provider connectivity issue to platform/risk/technical support and monitor affected symbols. | `bridge_status` is `failed` or `disconnected`. |
+| `rejected_without_reason` | `Warning` | Investigate missing rejection reason and update the operational record with a clear rejection explanation. | `status` is `rejected` and `reject_reason` is blank. |
+| `high_latency` | `Warning` | Review execution latency against operational thresholds and check whether the symbol, route, or bridge showed delays. | `latency_ms` is numeric and greater than `2000`. |
+| `pending_follow_up` | `Warning` | Carry forward to shift handover and confirm the order reaches a final status or is otherwise resolved. | `status` is `pending_new`, `transmitted`, or `new`, and `final_status_time_utc` is blank. |
 
 ## `sample_market_events.csv`
 

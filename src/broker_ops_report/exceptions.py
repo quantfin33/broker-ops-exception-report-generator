@@ -21,13 +21,41 @@ SEVERITY_BY_EXCEPTION_TYPE = {
 
 DEFAULT_SEVERITY = "Info"
 
+RECOMMENDED_ACTION_BY_EXCEPTION_TYPE = {
+    "received_not_transmitted": (
+        "Review platform queue/routing state and confirm whether the order should be "
+        "transmitted, cancelled, or escalated."
+    ),
+    "transmitted_no_final_status": (
+        "Check downstream execution/bridge response and follow up until a final fill, "
+        "reject, cancel, fail, or expiry status is recorded."
+    ),
+    "rejected_without_reason": (
+        "Investigate missing rejection reason and update the operational record with a "
+        "clear rejection explanation."
+    ),
+    "bridge_failed_or_disconnected": (
+        "Escalate bridge or liquidity-provider connectivity issue to "
+        "platform/risk/technical support and monitor affected symbols."
+    ),
+    "high_latency": (
+        "Review execution latency against operational thresholds and check whether the "
+        "symbol, route, or bridge showed delays."
+    ),
+    "pending_follow_up": (
+        "Carry forward to shift handover and confirm the order reaches a final status "
+        "or is otherwise resolved."
+    ),
+}
+
 
 @dataclass(frozen=True)
 class BrokerException:
-    """A detected broker operations exception type without recommended actions."""
+    """A detected broker operations exception type with deterministic triage metadata."""
 
     exception_type: str
     severity: str
+    recommended_action: str
     event_id: str
     client_order_id: str
     server_order_id: str
@@ -124,6 +152,7 @@ def _make_exception(row: dict[str, str], exception_type: str, detail: str) -> Br
     return BrokerException(
         exception_type=exception_type,
         severity=classify_severity(exception_type),
+        recommended_action=recommend_action(exception_type),
         event_id=_value(row, "event_id"),
         client_order_id=_value(row, "client_order_id"),
         server_order_id=_value(row, "server_order_id"),
@@ -138,6 +167,15 @@ def classify_severity(exception_type: str) -> str:
     """Return deterministic severity for an exception type."""
 
     return SEVERITY_BY_EXCEPTION_TYPE.get(exception_type, DEFAULT_SEVERITY)
+
+
+def recommend_action(exception_type: str) -> str:
+    """Return deterministic recommended action for a known exception type."""
+
+    try:
+        return RECOMMENDED_ACTION_BY_EXCEPTION_TYPE[exception_type]
+    except KeyError as exc:
+        raise ValueError(f"unknown exception type for recommended action: {exception_type}") from exc
 
 
 def _parse_number(value: str) -> float | None:

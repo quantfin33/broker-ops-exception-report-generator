@@ -31,7 +31,8 @@ The project must be framed as a broker operations reporting demo. It is not a tr
 - [x] CSV schema validation implemented.
 - [x] Phase 3C broker exception type detection implemented.
 - [x] Phase 3D severity classification implemented.
-- [ ] Remaining exception enrichments implemented.
+- [x] Phase 3E recommended action mapping implemented.
+- [ ] Later exception/reporting enrichments implemented.
 - [ ] Reports generated.
 - [ ] Tests added and passing.
 - [ ] README and recruiter-facing project framing written.
@@ -200,7 +201,7 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
   - abnormal symbol activity;
   - market-event overlap.
 - [x] Assign severity: `Critical`, `Warning`, or `Info`.
-- [ ] Attach recommended action for each exception.
+- [x] Attach recommended action for each exception.
 
 ### Phase 4 - Report Outputs
 

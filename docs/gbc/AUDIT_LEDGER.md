@@ -57,3 +57,11 @@ This ledger records completed Guided Build Cycle checkpoints. Keep entries conci
 - Safety result: Static/demo-only boundary preserved; no recommended actions, broker reports, by-symbol statistics, market-event overlap logic, duplicate-ID exception reporting, missing-field exception reporting, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, or credential dependency added.
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 56 tests; `validate-inputs` succeeded against current fixtures; root help and `validate-inputs --help` returned exit code 0; project-plan PDF regenerated.
 - Next task: After Phase 3D review, start Phase 3E only: recommended-action mapping for existing typed/severity-classified exceptions, if approved.
+
+## 2026-05-09 - Phase 3E Recommended Actions
+
+- Task: Add deterministic recommended-action mapping to the six existing typed and severity-classified broker exceptions.
+- Scope: `recommended_action` field on internal broker exception records, explicit action mapping tests, schema documentation, Phase 3E checklist updates, project-plan PDF regeneration, and GBC records.
+- Safety result: Static/demo-only boundary preserved; no broker reports, by-symbol statistics, market-event overlap logic, duplicate-ID exception reporting, missing-field exception reporting, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency added.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 66 tests; `validate-inputs` succeeded against current fixtures; root help and `validate-inputs --help` returned exit code 0; project-plan PDF regenerated.
+- Next task: After Phase 3E review, start Phase 4A only: design the report output contracts and generation plan, if approved.
