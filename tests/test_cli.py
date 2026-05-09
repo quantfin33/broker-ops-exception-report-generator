@@ -50,10 +50,17 @@ class BrokerOpsCliTests(unittest.TestCase):
 
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn(command, result.stdout)
-                self.assertIn("Placeholder only in Phase 1", result.stdout)
 
-    def test_placeholder_commands_exit_predictably(self) -> None:
-        for command in ("validate-inputs", "generate-reports", "run-demo"):
+    def test_validate_inputs_command_succeeds_for_current_fixtures(self) -> None:
+        result = self.run_module("validate-inputs")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Validation successful.", result.stdout)
+        self.assertIn("Order events rows:", result.stdout)
+        self.assertIn("Market events rows:", result.stdout)
+
+    def test_report_commands_remain_placeholders(self) -> None:
+        for command in ("generate-reports", "run-demo"):
             with self.subTest(command=command):
                 result = self.run_module(command)
 

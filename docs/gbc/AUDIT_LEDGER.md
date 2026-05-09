@@ -25,3 +25,11 @@ This ledger records completed Guided Build Cycle checkpoints. Keep entries conci
 - Safety result: Static/demo-only boundary preserved; all account/order/route/provider values are synthetic, and no live API, broker, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, credential, private log, or real account dependency was added.
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 11 tests; CLI help returned exit code 0; CSV headers and first rows were inspected with `head -5`; project-plan PDF regenerated.
 - Next task: After Phase 2 lock, start Phase 3 only: validation logic for the static CSV fixtures.
+
+## 2026-05-09 - Phase 3A CSV Schema Validation
+
+- Task: Implement standard-library structural CSV schema validation for the static fixtures.
+- Scope: schema constants, validation helpers, functional `validate-inputs` CLI behavior, fixture-valid sample data adjustment, validation tests, Phase 3A checklist updates, project-plan PDF regeneration, and GBC records.
+- Safety result: Static/demo-only boundary preserved; no broker exception rules, broker reports, by-symbol statistics, market-event overlap logic, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, or credential dependency added.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 24 tests; `validate-inputs` succeeded against current fixtures; root help and `validate-inputs --help` returned exit code 0; project-plan PDF regenerated.
+- Next task: After Phase 3A review, start Phase 3B only: lifecycle consistency and duplicate ID validation.

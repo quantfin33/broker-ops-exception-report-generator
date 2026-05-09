@@ -29,7 +29,7 @@ Some rows intentionally leave lifecycle timestamps blank so later validation and
 | `timestamp_utc` | UTC timestamp text | Primary event timestamp. |
 | `platform` | synthetic platform label | Demo source channel such as `demo_web`, `demo_mobile`, or `demo_desktop`. |
 | `account_id_hash` | synthetic hash-like string | Fake account reference. No real account data is included. |
-| `symbol` | instrument symbol or blank | Instrument under review. One row intentionally leaves this blank. |
+| `symbol` | instrument symbol | Instrument under review. Blank symbols are covered by temporary validation test fixtures, not the primary sample CSV. |
 | `asset_class` | string | Fixture asset class such as `fx`, `metal`, `crypto`, or `energy`. |
 | `side` | `buy` or `sell` | Order side. |
 | `order_type` | string | Demo order type such as `market` or `limit`. |
@@ -85,7 +85,7 @@ These rows are deliberate fixture cases for later tests:
 | `evt_0008` | Disconnected bridge status. |
 | `evt_0010` | Unresolved pending order. |
 | `evt_0011` and `evt_0012` | Duplicate `client_order_id`. |
-| `evt_0013` | Missing required field candidate: blank `symbol`. |
+| `evt_0013` | Structurally valid EURUSD row retained after missing-field coverage moved to temporary validation test fixtures. |
 | `evt_0014` and `evt_0015` | Duplicate `server_order_id`. |
 | `evt_0016` and `evt_0019` | Additional XAUUSD rejections for abnormal symbol activity candidates. |
 | `evt_0001` through `evt_0006` | Market-event overlap candidates near the demo CPI event. |

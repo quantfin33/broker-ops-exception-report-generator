@@ -1,6 +1,6 @@
 # Broker Operations Exception Report Generator - Project Plan
 
-Last updated: 2026-05-08
+Last updated: 2026-05-09
 
 ## Purpose
 
@@ -17,7 +17,7 @@ The project must be framed as a broker operations reporting demo. It is not a tr
 ## Current State
 
 - [x] Workspace inspected: `/Users/chris/Documents/New project`.
-- [x] Git exists but has no commits yet.
+- [x] Git exists with locked checkpoint commits.
 - [x] Existing local projects searched for reusable patterns.
 - [x] GitHub account `quantfin33` searched for candidate repos.
 - [x] Decision made: write clean original code in this workspace.
@@ -27,12 +27,18 @@ The project must be framed as a broker operations reporting demo. It is not a tr
 - [x] Repo-level `AGENTS.md` added for future Codex sessions.
 - [x] Git hygiene ignore rules added for OS files, caches, virtualenvs, temp files, logs, and local env files.
 - [x] Python project scaffold created.
-- [ ] Sample broker-style CSV data created.
+- [x] Sample broker-style CSV data created.
+- [x] CSV schema validation implemented.
 - [ ] Exception detection rules implemented.
 - [ ] Reports generated.
 - [ ] Tests added and passing.
 - [ ] README and recruiter-facing project framing written.
-- [ ] First git commit created.
+- [x] First git commit created.
+
+Locked commits:
+
+- [x] `de4801e` - Initialize broker ops report scaffold.
+- [x] `6922829` - Add static broker ops demo data.
 
 ## Reuse Decision
 
@@ -170,7 +176,12 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
 
 ### Phase 3 - Validation And Exception Rules
 
-- [ ] Validate required columns and missing core fields.
+- [x] Validate required columns and missing core fields.
+- [x] Validate allowed `status` and `bridge_status` values.
+- [x] Validate UTC-style timestamp fields when present.
+- [x] Validate numeric fields when present.
+- [x] Validate market-event required columns and related symbols.
+- [x] Scan input fixtures for obvious secret/live credential patterns.
 - [ ] Normalize timestamps to UTC.
 - [ ] Validate lifecycle consistency.
 - [ ] Detect duplicate `client_order_id` and `server_order_id`.

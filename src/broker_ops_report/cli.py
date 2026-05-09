@@ -13,6 +13,7 @@ from .config import (
     PROJECT_NAME,
     __version__,
 )
+from .validation import validate_inputs
 
 
 PLACEHOLDER_MESSAGE = (
@@ -25,12 +26,12 @@ def _add_common_input_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--orders",
         default=DEFAULT_ORDER_EVENTS_PATH,
-        help="Path to broker-style order events CSV. Placeholder only in Phase 1.",
+        help="Path to broker-style order events CSV.",
     )
     parser.add_argument(
         "--market-events",
         default=DEFAULT_MARKET_EVENTS_PATH,
-        help="Path to market events CSV. Placeholder only in Phase 1.",
+        help="Path to market events CSV.",
     )
 
 
@@ -40,8 +41,20 @@ def _placeholder_command(command_name: str) -> int:
     return 0
 
 
-def _run_validate_inputs(_args: argparse.Namespace) -> int:
-    return _placeholder_command("validate-inputs")
+def _run_validate_inputs(args: argparse.Namespace) -> int:
+    result = validate_inputs(args.orders, args.market_events)
+    if result.ok:
+        print("Validation successful.")
+        print(f"Order events rows: {result.order_rows}")
+        print(f"Market events rows: {result.market_event_rows}")
+        print(NO_LIVE_INTEGRATIONS_MESSAGE)
+        return 0
+
+    print("Validation failed.")
+    for issue in result.issues:
+        print(f"- {issue.format()}")
+    print(NO_LIVE_INTEGRATIONS_MESSAGE)
+    return 1
 
 
 def _run_generate_reports(_args: argparse.Namespace) -> int:
@@ -57,7 +70,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="broker_ops_report",
         description=(
             "Static broker operations exception report generator demo. "
-            "Phase 1 provides CLI scaffolding only."
+            "Includes CSV schema validation and placeholder report/demo commands."
         ),
     )
     parser.add_argument(
@@ -70,8 +83,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_inputs = subparsers.add_parser(
         "validate-inputs",
-        help="Validate broker-style input files. Placeholder only in Phase 1.",
-        description="Validate broker-style input files. Placeholder only in Phase 1.",
+        help="Validate broker-style input file schemas.",
+        description="Validate static broker-style CSV schemas without generating reports.",
     )
     _add_common_input_options(validate_inputs)
     validate_inputs.set_defaults(handler=_run_validate_inputs)
