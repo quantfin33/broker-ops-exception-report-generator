@@ -65,3 +65,19 @@ This ledger records completed Guided Build Cycle checkpoints. Keep entries conci
 - Safety result: Static/demo-only boundary preserved; no broker reports, by-symbol statistics, market-event overlap logic, duplicate-ID exception reporting, missing-field exception reporting, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency added.
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 66 tests; `validate-inputs` succeeded against current fixtures; root help and `validate-inputs --help` returned exit code 0; project-plan PDF regenerated.
 - Next task: After Phase 3E review, start Phase 4A only: design the report output contracts and generation plan, if approved.
+
+## 2026-05-09 - Phase 3F Tracker Sequencing Cleanup
+
+- Task: Correct the project tracker so Phase 3 core exception pipeline completion is clear before Phase 4A is committed.
+- Scope: documentation-only sequencing cleanup, GBC records, and project-plan PDF regeneration.
+- Safety result: Static/demo-only boundary preserved; no source code, tests, report logic, generated report output, Phase 4A implementation, Phase 4A GBC records, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency changed.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 69 tests; root help returned exit code 0; tracker text was inspected for Phase 3F sequencing, deferred enrichments, and Phase 4A local/unlocked wording; project-plan PDF regenerated.
+- Next task: Phase 3F.5 pre-commit audit and commit, then Phase 4A.5 audit and commit if approved.
+
+## 2026-05-09 - Phase 4A Exception Log Output (Local Work In Progress)
+
+- Task: Generate `outputs/order_exception_log.csv` from validated inputs and existing exception records.
+- Scope: standard-library exception-log writer, `generate-reports --report exception-log`, focused output tests, schema documentation, Phase 4A checklist updates, project-plan PDF regeneration, and GBC records.
+- Safety result: Static/demo-only boundary preserved; no JSON summary, by-symbol statistics, Markdown report, Excel output, HTML output, market-event overlap logic, duplicate-ID exception reporting, missing-field exception reporting, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency added.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 69 tests; `validate-inputs` succeeded against current fixtures; `generate-reports --report exception-log` wrote 14 exception rows; root help and `generate-reports --help` returned exit code 0; project-plan PDF regenerated.
+- Next task: Pause Phase 4A commit until Phase 3F tracker cleanup is locked.

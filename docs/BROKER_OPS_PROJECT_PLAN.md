@@ -29,9 +29,11 @@ The project must be framed as a broker operations reporting demo. It is not a tr
 - [x] Python project scaffold created.
 - [x] Sample broker-style CSV data created.
 - [x] CSV schema validation implemented.
+- [x] Phase 3 core exception pipeline complete.
 - [x] Phase 3C broker exception type detection implemented.
 - [x] Phase 3D severity classification implemented.
 - [x] Phase 3E recommended action mapping implemented.
+- [ ] Phase 4A exception log output prepared locally; commit paused pending Phase 3F lock.
 - [ ] Later exception/reporting enrichments implemented.
 - [ ] Reports generated.
 - [ ] Tests added and passing.
@@ -177,17 +179,18 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
 - [x] Include abnormal symbol activity and market-event overlap candidates.
 - [x] Add fixture-only tests for CSV existence, headers, scenario rows, secret scan, and no live dependency.
 
-### Phase 3 - Validation And Exception Rules
+### Phase 3 - Core Validation And Exception Pipeline
 
 - [x] Validate required columns and missing core fields.
 - [x] Validate allowed `status` and `bridge_status` values.
 - [x] Validate UTC-style timestamp fields when present.
+- [x] Defer timestamp normalization as optional future validation enhancement.
 - [x] Validate numeric fields when present.
 - [x] Validate market-event required columns and related symbols.
 - [x] Scan input fixtures for obvious secret/live credential patterns.
-- [ ] Normalize timestamps to UTC.
 - [x] Validate lifecycle consistency.
 - [x] Detect duplicate `client_order_id` and `server_order_id`.
+- [x] Treat duplicate IDs and missing required fields as validation failures, not Phase 3C exception-report rows.
 - [x] Detect Phase 3C broker exception types:
   - received not transmitted;
   - transmitted no final status;
@@ -195,11 +198,8 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
   - failed bridge status;
   - high latency;
   - pending follow-up.
-- [ ] Detect later exception/reporting types:
-  - duplicate ID exception type;
-  - missing required field exception type;
-  - abnormal symbol activity;
-  - market-event overlap.
+- [x] Defer abnormal symbol activity to later by-symbol statistics work.
+- [x] Defer market-event overlap to later enrichment work.
 - [x] Assign severity: `Critical`, `Warning`, or `Info`.
 - [x] Attach recommended action for each exception.
 
@@ -207,7 +207,7 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
 
 - [ ] Generate `outputs/broker_ops_shift_summary.json`.
 - [ ] Generate `outputs/by_symbol_trading_stats.csv`.
-- [ ] Generate `outputs/order_exception_log.csv`.
+- [ ] Generate `outputs/order_exception_log.csv` as a locked checkpoint. Local Phase 4A work exists but is not committed yet.
 - [ ] Generate `outputs/broker_ops_shift_report.md`.
 - [ ] Optionally generate `outputs/broker_ops_shift_report.xlsx` with summary, symbol stats, exceptions, and events sheets.
 

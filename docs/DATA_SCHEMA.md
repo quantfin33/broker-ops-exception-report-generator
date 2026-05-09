@@ -126,6 +126,25 @@ Phase 3C detects broker exception types from schema-valid static order rows only
 | `expected_impact` | string | Expected impact label such as `low`, `medium`, or `high`. |
 | `related_symbols` | semicolon-separated string | Symbols that may be affected by the event. |
 
+## Phase 4A `order_exception_log.csv`
+
+Phase 4A writes `outputs/order_exception_log.csv` only. It is generated from validated static inputs and existing internal exception records. It does not generate a JSON summary, by-symbol statistics, Markdown report, Excel workbook, market-event overlap, duplicate-ID exception reporting, or missing-field exception reporting.
+
+Sequencing note: Phase 3C through Phase 3E define the core exception object pipeline. Duplicate IDs and missing required fields remain validation failures, not exception-log rows. Abnormal symbol activity is deferred to later by-symbol statistics work, and market-event overlap is deferred to later enrichment. Phase 4A can depend on the existing exception objects, but its output remains local work-in-progress until the Phase 3F tracker cleanup is locked.
+
+| Column | Source |
+| --- | --- |
+| `exception_type` | Internal broker exception type. |
+| `severity` | Deterministic severity classification. |
+| `event_id` | Source order-event row id. |
+| `client_order_id` | Source synthetic client order id. |
+| `server_order_id` | Source synthetic server order id, if present. |
+| `symbol` | Source symbol. |
+| `status` | Source lifecycle status. |
+| `bridge_status` | Source bridge status. |
+| `detail` | Deterministic exception detail text. |
+| `recommended_action` | Deterministic operations follow-up text. |
+
 ## Non-Claims
 
 - Static sample data only.
