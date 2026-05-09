@@ -1,0 +1,50 @@
+Broker Operations Exception Report Generator - Final Integration Audit
+Date: 2026-05-09
+
+Commands run
+- git status --short --untracked-files=all
+- PYTHONPATH=src python3 -m unittest discover
+- PYTHONPATH=src python3 -m broker_ops_report validate-inputs --orders data/sample_order_events.csv --market-events data/sample_market_events.csv
+- PYTHONPATH=src python3 -m broker_ops_report generate-reports --report exception-log --orders data/sample_order_events.csv --market-events data/sample_market_events.csv --output-dir outputs
+- PYTHONPATH=src python3 -m broker_ops_report generate-reports --report shift-summary --orders data/sample_order_events.csv --market-events data/sample_market_events.csv --output-dir outputs
+- PYTHONPATH=src python3 -m broker_ops_report generate-reports --report symbol-stats --orders data/sample_order_events.csv --market-events data/sample_market_events.csv --output-dir outputs
+- PYTHONPATH=src python3 -m broker_ops_report generate-reports --report shift-report --orders data/sample_order_events.csv --market-events data/sample_market_events.csv --output-dir outputs
+- PYTHONPATH=src python3 -m broker_ops_report --help
+- PYTHONPATH=src python3 -m broker_ops_report generate-reports --help
+- rg -n "api_key|secret|password|token|\\.env|Binance|Telegram|TradingView|live broker|MT4|MT5|FIX|real account|real client" .
+
+Results
+- Tests passed: 76
+- Input validation: passed
+- Exception log generation: passed
+- Shift summary JSON generation: passed
+- By-symbol stats generation: passed
+- Shift report generation: passed
+
+Tie-outs
+- Order rows: 20
+- Market-event rows: 5
+- Exception log rows: 14
+- Summary total exceptions: 14
+- Severity counts: Critical 4, Warning 10, Info 0
+- By-symbol rows: 6
+- By-symbol total orders: 20
+- By-symbol exception count: 14
+
+Output checks
+- outputs/order_exception_log.csv exists.
+- outputs/broker_ops_shift_summary.json exists and parses.
+- outputs/by_symbol_trading_stats.csv exists.
+- outputs/broker_ops_shift_report.md exists.
+- No .xlsx output exists.
+- No .html output exists.
+
+Safety scan conclusion
+The scan returned expected non-claim text, test assertions, schema scan patterns,
+and audit wording. No credential file, .env file, live integration code, real
+account data, or real client data was found.
+
+Conclusion
+The approved v1 workflow regenerates cleanly and remains a static broker
+operations reporting demo.
+
