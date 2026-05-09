@@ -41,3 +41,11 @@ This ledger records completed Guided Build Cycle checkpoints. Keep entries conci
 - Safety result: Static/demo-only boundary preserved; no broker exception rules, severity classification, recommended actions, broker reports, by-symbol statistics, market-event overlap logic, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, or credential dependency added.
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 36 tests; `validate-inputs` succeeded against current fixtures; root help and `validate-inputs --help` returned exit code 0; project-plan PDF regenerated.
 - Next task: After Phase 3B review, start Phase 3C only: broker exception rule detection without report generation.
+
+## 2026-05-09 - Phase 3C Exception Detection Types
+
+- Task: Implement deterministic broker exception type detection from schema-valid static order rows.
+- Scope: internal `BrokerException` data structure, exception-type detector, tests for the six Phase 3C exception types, schema documentation, Phase 3C checklist updates, project-plan PDF regeneration, and GBC records.
+- Safety result: Static/demo-only boundary preserved; no severity classification, recommended actions, broker reports, by-symbol statistics, market-event overlap logic, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, or credential dependency added.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 48 tests; `validate-inputs` succeeded against current fixtures; root help and `validate-inputs --help` returned exit code 0; project-plan PDF regenerated.
+- Next task: After Phase 3C review, start Phase 3D only: severity classification and recommended-action mapping, if approved.
