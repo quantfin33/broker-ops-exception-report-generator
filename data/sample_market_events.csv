@@ -1,0 +1,6 @@
+event_time_utc,asset,event_type,headline,expected_impact,related_symbols
+2026-05-07T12:30:00Z,USD,macro_release,Demo US CPI release window,high,EURUSD;XAUUSD;USDJPY
+2026-05-07T12:35:00Z,USD,central_bank,Demo FOMC speaker headline,medium,EURUSD;XAUUSD;GBPUSD
+2026-05-07T14:30:00Z,energy,inventory_report,Demo oil inventory report,medium,USOIL
+2026-05-07T15:00:00Z,crypto,market_stress,Demo crypto liquidation volatility note,high,BTCUSD
+2026-05-07T16:00:00Z,metals,volatility_note,Demo gold volatility monitoring note,high,XAUUSD

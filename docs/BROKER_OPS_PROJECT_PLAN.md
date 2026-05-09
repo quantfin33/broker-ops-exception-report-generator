@@ -152,10 +152,11 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
 
 ### Phase 2 - Static Demo Data
 
-- [ ] Create `data/sample_order_events.csv`.
-- [ ] Create `data/sample_market_events.csv`.
-- [ ] Include realistic broker-style fields: timestamps, order IDs, status, bridge status, route, liquidity provider, latency, slippage, and sample P&L.
-- [ ] Include intentionally imperfect rows for testing:
+- [x] Create `data/sample_order_events.csv`.
+- [x] Create `data/sample_market_events.csv`.
+- [x] Create `docs/DATA_SCHEMA.md`.
+- [x] Include realistic broker-style fields: timestamps, order IDs, status, bridge status, route, liquidity provider, latency, slippage, and sample P&L.
+- [x] Include intentionally imperfect rows for testing:
   - received but not transmitted;
   - transmitted but no final status;
   - rejected without reason;
@@ -164,6 +165,8 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
   - missing required field;
   - high-latency event;
   - unresolved pending order.
+- [x] Include abnormal symbol activity and market-event overlap candidates.
+- [x] Add fixture-only tests for CSV existence, headers, scenario rows, secret scan, and no live dependency.
 
 ### Phase 3 - Validation And Exception Rules
 
