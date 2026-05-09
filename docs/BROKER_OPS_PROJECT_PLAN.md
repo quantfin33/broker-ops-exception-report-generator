@@ -36,6 +36,7 @@ The project must be framed as a broker operations reporting demo. It is not a tr
 - [x] Phase 4A exception log output locked.
 - [x] Phase 4B shift summary JSON output locked.
 - [x] Phase 4C by-symbol trading stats CSV implemented.
+- [x] Phase 4D broker ops shift report Markdown implemented.
 - [ ] Later exception/reporting enrichments implemented.
 - [ ] Reports generated.
 - [ ] Tests added and passing.
@@ -210,7 +211,7 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
 - [x] Generate `outputs/broker_ops_shift_summary.json`.
 - [x] Generate `outputs/by_symbol_trading_stats.csv`.
 - [x] Generate `outputs/order_exception_log.csv`.
-- [ ] Generate `outputs/broker_ops_shift_report.md`.
+- [x] Generate `outputs/broker_ops_shift_report.md`.
 - [ ] Optionally generate `outputs/broker_ops_shift_report.xlsx` with summary, symbol stats, exceptions, and events sheets.
 
 ### Phase 5 - Tests And Verification

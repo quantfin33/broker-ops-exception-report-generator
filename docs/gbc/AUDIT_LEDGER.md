@@ -105,3 +105,11 @@ This ledger records completed Guided Build Cycle checkpoints. Keep entries conci
 - Safety result: Static/demo-only boundary preserved; no Markdown report, Excel output, HTML output, market-event overlap logic, abnormal-symbol flags, new exception types, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency added.
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 74 tests; `validate-inputs` succeeded against current fixtures; `generate-reports --report symbol-stats` wrote 6 symbol rows tied to 20 order rows and 14 exceptions; exception-log and shift-summary generation still returned exit code 0; root help and `generate-reports --help` returned exit code 0; project-plan PDF regenerated.
 - Next task: Phase 4C pre-commit audit and commit if approved, then Phase 4D Markdown shift report.
+
+## 2026-05-09 - Phase 4D Broker Ops Shift Report Markdown
+
+- Task: Generate `outputs/broker_ops_shift_report.md` from validated static inputs, existing exception records, and by-symbol aggregation.
+- Scope: standard-library Markdown report writer, `generate-reports --report shift-report`, focused output tests, schema documentation, Phase 4D checklist updates, project-plan PDF regeneration, and GBC records.
+- Safety result: Static/demo-only boundary preserved; no Excel output, HTML output, market-event overlap logic, new exception types, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, browser-session, real client/account data, execution claim, or trading-bot claim added.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 76 tests; `validate-inputs` succeeded against current fixtures; all four approved report commands returned exit code 0; Markdown report includes the required sections and non-claims; no Excel or HTML output was created; project-plan PDF regenerated.
+- Next task: Start final integration checks after Phase 4D commit.

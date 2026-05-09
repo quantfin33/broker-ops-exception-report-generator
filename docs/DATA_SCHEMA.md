@@ -166,6 +166,30 @@ Phase 4C writes `outputs/by_symbol_trading_stats.csv` only. It aggregates valida
 | `critical_exception_count` | Count of existing detected `Critical` exception records for the symbol. |
 | `warning_exception_count` | Count of existing detected `Warning` exception records for the symbol. |
 
+## Phase 4D `broker_ops_shift_report.md`
+
+Phase 4D writes `outputs/broker_ops_shift_report.md` only. It renders a deterministic human-readable shift report from validated static inputs, existing exception records, and the Phase 4C by-symbol aggregation logic. It does not generate Excel, HTML, live data, market-event overlap, or execution/advice content.
+
+Required sections:
+
+- `Broker Operations Shift Report`
+- `Input files used`
+- `Order activity summary`
+- `Exception summary`
+- `Severity breakdown`
+- `Items requiring review`
+- `By-symbol summary`
+- `Shift handover notes`
+- `Limitations / non-claims`
+
+Required non-claims:
+
+- Static sample data only.
+- No real client/account data.
+- No live broker connection.
+- No MT4/MT5 admin access.
+- No execution or trading bot.
+
 ## Non-Claims
 
 - Static sample data only.

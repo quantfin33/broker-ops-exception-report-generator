@@ -23,6 +23,7 @@ from broker_ops_report.config import LIVE_INTEGRATIONS_ALLOWED, NETWORK_DEPENDEN
 from broker_ops_report.exceptions import detect_exceptions
 from broker_ops_report.reporting import (
     ORDER_EXCEPTION_LOG_HEADERS,
+    SHIFT_REPORT_FILENAME,
     SHIFT_SUMMARY_FILENAME,
     SYMBOL_STATS_FILENAME,
     SYMBOL_STATS_HEADERS,
@@ -278,6 +279,91 @@ class ExceptionLogReportTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("Validation failed.", result.stdout)
             self.assertFalse((output_dir / SYMBOL_STATS_FILENAME).exists())
+
+    def test_generate_shift_report_cli_writes_expected_markdown(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir)
+
+            result = self.run_cli(
+                "generate-reports",
+                "--report",
+                "shift-report",
+                "--orders",
+                str(ORDER_EVENTS),
+                "--market-events",
+                str(MARKET_EVENTS),
+                "--output-dir",
+                str(output_dir),
+            )
+
+            output_path = output_dir / SHIFT_REPORT_FILENAME
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Report generated: shift-report", result.stdout)
+            self.assertTrue(output_path.is_file())
+
+            report = output_path.read_text(encoding="utf-8")
+            for section in (
+                "# Broker Operations Shift Report",
+                "## Input files used",
+                "## Order activity summary",
+                "## Exception summary",
+                "## Severity breakdown",
+                "## Items requiring review",
+                "## By-symbol summary",
+                "## Shift handover notes",
+                "## Limitations / non-claims",
+            ):
+                self.assertIn(section, report)
+
+            self.assertIn("- Order rows: 20", report)
+            self.assertIn("- Market-event rows: 5", report)
+            self.assertIn("- Total exceptions: 14", report)
+            self.assertIn("- Critical: 4", report)
+            self.assertIn("- Warning: 10", report)
+            self.assertIn("- Info: 0", report)
+            self.assertIn("| BTCUSD | crypto |", report)
+            self.assertIn("| XAUUSD | metal |", report)
+            self.assertIn("Carry forward unresolved exception items: 4", report)
+            self.assertIn("- Static sample data only.", report)
+            self.assertIn("- No real client/account data.", report)
+            self.assertIn("- No live broker connection.", report)
+            self.assertIn("- No MT4/MT5 admin access.", report)
+            self.assertIn("- No execution or trading bot.", report)
+
+            self.assertFalse((output_dir / "order_exception_log.csv").exists())
+            self.assertFalse((output_dir / SHIFT_SUMMARY_FILENAME).exists())
+            self.assertFalse((output_dir / SYMBOL_STATS_FILENAME).exists())
+            self.assertEqual(list(output_dir.glob("*.xlsx")), [])
+            self.assertEqual(list(output_dir.glob("*.html")), [])
+
+    def test_generate_shift_report_validation_failure_does_not_write_report(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            bad_orders = tmp_path / "bad_orders.csv"
+            output_dir = tmp_path / "outputs"
+            with ORDER_EVENTS.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+            rows[0]["status"] = "bad_status"
+            with bad_orders.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=ORDER_EVENT_HEADERS)
+                writer.writeheader()
+                writer.writerows(rows)
+
+            result = self.run_cli(
+                "generate-reports",
+                "--report",
+                "shift-report",
+                "--orders",
+                str(bad_orders),
+                "--market-events",
+                str(MARKET_EVENTS),
+                "--output-dir",
+                str(output_dir),
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Validation failed.", result.stdout)
+            self.assertFalse((output_dir / SHIFT_REPORT_FILENAME).exists())
 
     def test_generate_shift_summary_is_deterministic(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

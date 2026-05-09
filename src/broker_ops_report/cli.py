@@ -14,6 +14,7 @@ from .config import (
     __version__,
 )
 from .reporting import (
+    write_broker_ops_shift_report,
     write_broker_ops_shift_summary,
     write_by_symbol_trading_stats,
     write_order_exception_log,
@@ -77,8 +78,10 @@ def _run_generate_reports(args: argparse.Namespace) -> int:
         result = write_order_exception_log(args.orders, args.market_events, args.output_dir)
     elif args.report == "shift-summary":
         result = write_broker_ops_shift_summary(args.orders, args.market_events, args.output_dir)
-    else:
+    elif args.report == "symbol-stats":
         result = write_by_symbol_trading_stats(args.orders, args.market_events, args.output_dir)
+    else:
+        result = write_broker_ops_shift_report(args.orders, args.market_events, args.output_dir)
 
     if not result.validation.ok:
         _print_validation_failure(result.validation)
@@ -133,10 +136,11 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common_input_options(generate_reports)
     generate_reports.add_argument(
         "--report",
-        choices=("exception-log", "shift-summary", "symbol-stats"),
+        choices=("exception-log", "shift-summary", "symbol-stats", "shift-report"),
         help=(
             "Report to generate. Phase 4A supports exception-log; "
-            "Phase 4B supports shift-summary; Phase 4C supports symbol-stats."
+            "Phase 4B supports shift-summary; Phase 4C supports symbol-stats; "
+            "Phase 4D supports shift-report."
         ),
     )
     generate_reports.add_argument(

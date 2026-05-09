@@ -15,6 +15,7 @@ from .validation import ValidationResult, validate_inputs
 ORDER_EXCEPTION_LOG_FILENAME = "order_exception_log.csv"
 SHIFT_SUMMARY_FILENAME = "broker_ops_shift_summary.json"
 SYMBOL_STATS_FILENAME = "by_symbol_trading_stats.csv"
+SHIFT_REPORT_FILENAME = "broker_ops_shift_report.md"
 
 SEVERITY_ORDER = ("Critical", "Warning", "Info")
 EXCEPTION_TYPE_ORDER = (
@@ -94,6 +95,18 @@ class ShiftSummaryResult:
     validation: ValidationResult
 
 
+@dataclass(frozen=True)
+class ShiftReportResult:
+    """Result from writing the Phase 4D Markdown shift report."""
+
+    output_path: Path
+    exception_count: int
+    order_count: int
+    market_event_count: int
+    symbol_count: int
+    validation: ValidationResult
+
+
 def write_order_exception_log(
     order_path: str | Path,
     market_events_path: str | Path,
@@ -149,6 +162,51 @@ def write_by_symbol_trading_stats(
         symbol_count=len(stats_rows),
         order_count=len(order_rows),
         exception_count=len(exceptions),
+        validation=validation,
+    )
+
+
+def write_broker_ops_shift_report(
+    order_path: str | Path,
+    market_events_path: str | Path,
+    output_dir: str | Path,
+) -> ShiftReportResult:
+    """Validate inputs and write only the Phase 4D Markdown shift report."""
+
+    validation = validate_inputs(order_path, market_events_path)
+    output_path = Path(output_dir) / SHIFT_REPORT_FILENAME
+    if not validation.ok:
+        return ShiftReportResult(
+            output_path=output_path,
+            exception_count=0,
+            order_count=0,
+            market_event_count=0,
+            symbol_count=0,
+            validation=validation,
+        )
+
+    order_rows = _read_csv_rows(order_path)
+    market_event_rows = _read_csv_rows(market_events_path)
+    exceptions = detect_exceptions(order_path)
+    symbol_rows = _build_symbol_stats_rows(order_rows, exceptions)
+    markdown = _build_shift_report_markdown(
+        order_path=order_path,
+        market_events_path=market_events_path,
+        order_rows=order_rows,
+        market_event_rows=market_event_rows,
+        exceptions=exceptions,
+        symbol_rows=symbol_rows,
+    )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(markdown, encoding="utf-8")
+
+    return ShiftReportResult(
+        output_path=output_path,
+        exception_count=len(exceptions),
+        order_count=len(order_rows),
+        market_event_count=len(market_event_rows),
+        symbol_count=len(symbol_rows),
         validation=validation,
     )
 
@@ -218,6 +276,127 @@ def _write_exception_log_csv(output_path: Path, exceptions: list[BrokerException
                     "recommended_action": exception.recommended_action,
                 }
             )
+
+
+def _build_shift_report_markdown(
+    *,
+    order_path: str | Path,
+    market_events_path: str | Path,
+    order_rows: list[dict[str, str]],
+    market_event_rows: list[dict[str, str]],
+    exceptions: list[BrokerException],
+    symbol_rows: list[dict[str, str]],
+) -> str:
+    severity_breakdown = _breakdown(
+        (exception.severity for exception in exceptions),
+        SEVERITY_ORDER,
+    )
+    exception_type_breakdown = _breakdown(
+        (exception.exception_type for exception in exceptions),
+        EXCEPTION_TYPE_ORDER,
+    )
+    status_counts = Counter(_value(row, "status") for row in order_rows)
+    review_items = [
+        exception
+        for exception in exceptions
+        if exception.severity in {"Critical", "Warning"}
+    ]
+    unresolved_items = [
+        exception
+        for exception in exceptions
+        if exception.exception_type in UNRESOLVED_EXCEPTION_TYPES
+    ]
+
+    lines = [
+        "# Broker Operations Shift Report",
+        "",
+        "## Input files used",
+        "",
+        f"- Orders: `{order_path}`",
+        f"- Market events: `{market_events_path}`",
+        "",
+        "## Order activity summary",
+        "",
+        f"- Order rows: {len(order_rows)}",
+        f"- Market-event rows: {len(market_event_rows)}",
+        f"- Symbols monitored: {len(symbol_rows)}",
+        f"- Filled orders: {status_counts.get('filled', 0)}",
+        f"- Rejected orders: {status_counts.get('rejected', 0)}",
+        f"- Failed orders: {status_counts.get('failed', 0)}",
+        f"- Pending/open orders: {_count_pending_or_open(order_rows)}",
+        "",
+        "## Exception summary",
+        "",
+        f"- Total exceptions: {len(exceptions)}",
+        *[
+            f"- {exception_type}: {count}"
+            for exception_type, count in exception_type_breakdown.items()
+        ],
+        "",
+        "## Severity breakdown",
+        "",
+        *[
+            f"- {severity}: {count}"
+            for severity, count in severity_breakdown.items()
+        ],
+        "",
+        "## Items requiring review",
+        "",
+    ]
+
+    if review_items:
+        lines.extend(
+            _format_review_item(exception)
+            for exception in review_items
+        )
+    else:
+        lines.append("- No Critical or Warning items detected.")
+
+    lines.extend(
+        [
+            "",
+            "## By-symbol summary",
+            "",
+            "| Symbol | Asset class | Orders | Exceptions | Critical | Warning | Avg latency ms | P&L USD |",
+            "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for row in symbol_rows:
+        lines.append(
+            "| {symbol} | {asset_class} | {total_orders} | {exception_count} | "
+            "{critical_exception_count} | {warning_exception_count} | "
+            "{average_latency_ms} | {total_pnl_usd} |".format(**row)
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Shift handover notes",
+            "",
+            f"- Carry forward unresolved exception items: {len(unresolved_items)}",
+            f"- Critical exceptions requiring immediate review: {severity_breakdown['Critical']}",
+            "- Confirm pending/open orders reach a final status or are otherwise resolved.",
+            "- Review symbols with concentrated exceptions using the by-symbol summary.",
+            "",
+            "## Limitations / non-claims",
+            "",
+            "- Static sample data only.",
+            "- No real client/account data.",
+            "- No live broker connection.",
+            "- No MT4/MT5 admin access.",
+            "- No execution or trading bot.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _format_review_item(exception: BrokerException) -> str:
+    return (
+        f"- {exception.severity} `{exception.exception_type}` on `{exception.symbol}` "
+        f"event `{exception.event_id}`: {exception.detail} "
+        f"Action: {exception.recommended_action}"
+    )
 
 
 def _build_symbol_stats_rows(
