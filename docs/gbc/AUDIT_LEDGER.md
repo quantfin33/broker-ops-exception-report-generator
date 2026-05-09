@@ -97,3 +97,11 @@ This ledger records completed Guided Build Cycle checkpoints. Keep entries conci
 - Safety result: Static/demo-only boundary preserved; no source code, tests, `order_exception_log.csv`, `broker_ops_shift_summary.json`, Phase 4C/4D output, README, live API, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency changed.
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 72 tests; root help returned exit code 0; project-plan PDF regenerated; staged files were inspected before commit.
 - Next task: Start Phase 4C only: by-symbol trading stats CSV.
+
+## 2026-05-09 - Phase 4C By-Symbol Trading Stats CSV
+
+- Task: Generate `outputs/by_symbol_trading_stats.csv` from validated static order rows and existing exception records.
+- Scope: standard-library by-symbol CSV writer, `generate-reports --report symbol-stats`, focused output tests, schema documentation, Phase 4C checklist updates, project-plan PDF regeneration, and GBC records.
+- Safety result: Static/demo-only boundary preserved; no Markdown report, Excel output, HTML output, market-event overlap logic, abnormal-symbol flags, new exception types, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency added.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 74 tests; `validate-inputs` succeeded against current fixtures; `generate-reports --report symbol-stats` wrote 6 symbol rows tied to 20 order rows and 14 exceptions; exception-log and shift-summary generation still returned exit code 0; root help and `generate-reports --help` returned exit code 0; project-plan PDF regenerated.
+- Next task: Phase 4C pre-commit audit and commit if approved, then Phase 4D Markdown shift report.

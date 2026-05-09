@@ -14,6 +14,7 @@ from .validation import ValidationResult, validate_inputs
 
 ORDER_EXCEPTION_LOG_FILENAME = "order_exception_log.csv"
 SHIFT_SUMMARY_FILENAME = "broker_ops_shift_summary.json"
+SYMBOL_STATS_FILENAME = "by_symbol_trading_stats.csv"
 
 SEVERITY_ORDER = ("Critical", "Warning", "Info")
 EXCEPTION_TYPE_ORDER = (
@@ -29,6 +30,7 @@ UNRESOLVED_EXCEPTION_TYPES = (
     "transmitted_no_final_status",
     "pending_follow_up",
 )
+PENDING_OR_OPEN_STATUSES = {"received", "pending_new", "new", "transmitted", "partially_filled"}
 
 ORDER_EXCEPTION_LOG_HEADERS = [
     "exception_type",
@@ -43,12 +45,40 @@ ORDER_EXCEPTION_LOG_HEADERS = [
     "recommended_action",
 ]
 
+SYMBOL_STATS_HEADERS = [
+    "symbol",
+    "asset_class",
+    "total_orders",
+    "filled_orders",
+    "rejected_orders",
+    "failed_orders",
+    "pending_or_open_orders",
+    "total_volume",
+    "average_latency_ms",
+    "max_latency_ms",
+    "total_pnl_usd",
+    "exception_count",
+    "critical_exception_count",
+    "warning_exception_count",
+]
+
 
 @dataclass(frozen=True)
 class ExceptionLogResult:
     """Result from writing the Phase 4A exception log."""
 
     output_path: Path
+    exception_count: int
+    validation: ValidationResult
+
+
+@dataclass(frozen=True)
+class SymbolStatsResult:
+    """Result from writing the Phase 4C by-symbol trading stats CSV."""
+
+    output_path: Path
+    symbol_count: int
+    order_count: int
     exception_count: int
     validation: ValidationResult
 
@@ -81,6 +111,43 @@ def write_order_exception_log(
     _write_exception_log_csv(output_path, exceptions)
     return ExceptionLogResult(
         output_path=output_path,
+        exception_count=len(exceptions),
+        validation=validation,
+    )
+
+
+def write_by_symbol_trading_stats(
+    order_path: str | Path,
+    market_events_path: str | Path,
+    output_dir: str | Path,
+) -> SymbolStatsResult:
+    """Validate inputs and write only the Phase 4C by-symbol stats CSV."""
+
+    validation = validate_inputs(order_path, market_events_path)
+    output_path = Path(output_dir) / SYMBOL_STATS_FILENAME
+    if not validation.ok:
+        return SymbolStatsResult(
+            output_path=output_path,
+            symbol_count=0,
+            order_count=0,
+            exception_count=0,
+            validation=validation,
+        )
+
+    order_rows = _read_csv_rows(order_path)
+    exceptions = detect_exceptions(order_path)
+    stats_rows = _build_symbol_stats_rows(order_rows, exceptions)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=SYMBOL_STATS_HEADERS)
+        writer.writeheader()
+        writer.writerows(stats_rows)
+
+    return SymbolStatsResult(
+        output_path=output_path,
+        symbol_count=len(stats_rows),
+        order_count=len(order_rows),
         exception_count=len(exceptions),
         validation=validation,
     )
@@ -151,6 +218,54 @@ def _write_exception_log_csv(output_path: Path, exceptions: list[BrokerException
                     "recommended_action": exception.recommended_action,
                 }
             )
+
+
+def _build_symbol_stats_rows(
+    order_rows: list[dict[str, str]],
+    exceptions: list[BrokerException],
+) -> list[dict[str, str]]:
+    rows_by_symbol: dict[str, list[dict[str, str]]] = {}
+    for row in order_rows:
+        symbol = _value(row, "symbol")
+        rows_by_symbol.setdefault(symbol, []).append(row)
+
+    exceptions_by_symbol: dict[str, list[BrokerException]] = {}
+    for exception in exceptions:
+        exceptions_by_symbol.setdefault(exception.symbol, []).append(exception)
+
+    output_rows: list[dict[str, str]] = []
+    for symbol in sorted(rows_by_symbol):
+        symbol_rows = rows_by_symbol[symbol]
+        symbol_exceptions = exceptions_by_symbol.get(symbol, [])
+        severity_counts = Counter(exception.severity for exception in symbol_exceptions)
+        latency_values = [_parse_number(_value(row, "latency_ms")) for row in symbol_rows]
+        numeric_latencies = [value for value in latency_values if value is not None]
+
+        output_rows.append(
+            {
+                "symbol": symbol,
+                "asset_class": _first_nonblank(symbol_rows, "asset_class"),
+                "total_orders": str(len(symbol_rows)),
+                "filled_orders": str(_count_status(symbol_rows, "filled")),
+                "rejected_orders": str(_count_status(symbol_rows, "rejected")),
+                "failed_orders": str(_count_status(symbol_rows, "failed")),
+                "pending_or_open_orders": str(_count_pending_or_open(symbol_rows)),
+                "total_volume": _format_number(
+                    sum(_parse_number(_value(row, "volume")) or 0.0 for row in symbol_rows)
+                ),
+                "average_latency_ms": _format_number(
+                    sum(numeric_latencies) / len(numeric_latencies) if numeric_latencies else 0.0
+                ),
+                "max_latency_ms": _format_number(max(numeric_latencies) if numeric_latencies else 0.0),
+                "total_pnl_usd": _format_number(
+                    sum(_parse_number(_value(row, "pnl_usd")) or 0.0 for row in symbol_rows)
+                ),
+                "exception_count": str(len(symbol_exceptions)),
+                "critical_exception_count": str(severity_counts.get("Critical", 0)),
+                "warning_exception_count": str(severity_counts.get("Warning", 0)),
+            }
+        )
+    return output_rows
 
 
 def _build_shift_summary(
@@ -264,3 +379,36 @@ def _highest_severity_present(severity_breakdown: dict[str, int]) -> str | None:
 
 def _count_validation_issues(validation: ValidationResult, text: str) -> int:
     return sum(1 for issue in validation.issues if text in issue.message)
+
+
+def _count_status(rows: list[dict[str, str]], status: str) -> int:
+    return sum(1 for row in rows if _value(row, "status") == status)
+
+
+def _count_pending_or_open(rows: list[dict[str, str]]) -> int:
+    return sum(1 for row in rows if _value(row, "status") in PENDING_OR_OPEN_STATUSES)
+
+
+def _first_nonblank(rows: list[dict[str, str]], field_name: str) -> str:
+    for row in rows:
+        value = _value(row, field_name)
+        if value:
+            return value
+    return ""
+
+
+def _parse_number(value: str) -> float | None:
+    if not value:
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
+
+def _format_number(value: float) -> str:
+    return f"{value:.6f}".rstrip("0").rstrip(".")
+
+
+def _value(row: dict[str, str], field_name: str) -> str:
+    return (row.get(field_name) or "").strip()

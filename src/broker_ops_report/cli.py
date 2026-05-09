@@ -13,7 +13,11 @@ from .config import (
     PROJECT_NAME,
     __version__,
 )
-from .reporting import write_broker_ops_shift_summary, write_order_exception_log
+from .reporting import (
+    write_broker_ops_shift_summary,
+    write_by_symbol_trading_stats,
+    write_order_exception_log,
+)
 from .validation import validate_inputs
 
 
@@ -71,8 +75,10 @@ def _run_generate_reports(args: argparse.Namespace) -> int:
 
     if args.report == "exception-log":
         result = write_order_exception_log(args.orders, args.market_events, args.output_dir)
-    else:
+    elif args.report == "shift-summary":
         result = write_broker_ops_shift_summary(args.orders, args.market_events, args.output_dir)
+    else:
+        result = write_by_symbol_trading_stats(args.orders, args.market_events, args.output_dir)
 
     if not result.validation.ok:
         _print_validation_failure(result.validation)
@@ -83,6 +89,9 @@ def _run_generate_reports(args: argparse.Namespace) -> int:
     print(f"Exception rows: {result.exception_count}")
     if hasattr(result, "order_count"):
         print(f"Order rows: {result.order_count}")
+    if hasattr(result, "symbol_count"):
+        print(f"Symbol rows: {result.symbol_count}")
+    if hasattr(result, "market_event_count"):
         print(f"Market event rows: {result.market_event_count}")
     print(NO_LIVE_INTEGRATIONS_MESSAGE)
     return 0
@@ -124,8 +133,11 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common_input_options(generate_reports)
     generate_reports.add_argument(
         "--report",
-        choices=("exception-log", "shift-summary"),
-        help="Report to generate. Phase 4A supports exception-log; Phase 4B supports shift-summary.",
+        choices=("exception-log", "shift-summary", "symbol-stats"),
+        help=(
+            "Report to generate. Phase 4A supports exception-log; "
+            "Phase 4B supports shift-summary; Phase 4C supports symbol-stats."
+        ),
     )
     generate_reports.add_argument(
         "--output-dir",

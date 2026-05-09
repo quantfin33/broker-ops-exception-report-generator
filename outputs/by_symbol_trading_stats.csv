@@ -1,0 +1,7 @@
+symbol,asset_class,total_orders,filled_orders,rejected_orders,failed_orders,pending_or_open_orders,total_volume,average_latency_ms,max_latency_ms,total_pnl_usd,exception_count,critical_exception_count,warning_exception_count
+BTCUSD,crypto,2,0,0,1,1,0.3,2150,4300,0,4,2,2
+EURUSD,fx,6,4,1,0,0,6.2,50288.333333,300000,28.4,1,0,1
+GBPUSD,fx,1,0,0,0,1,1.4,410,410,3.25,0,0,0
+USDJPY,fx,1,1,0,0,0,2,3250,3250,18.7,1,0,1
+USOIL,energy,2,0,0,1,0,9,31510,60000,0,3,1,2
+XAUUSD,metal,8,2,3,0,3,13.95,873.75,2500,63.4,5,1,4

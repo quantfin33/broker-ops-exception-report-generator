@@ -21,7 +21,12 @@ if str(SRC) not in sys.path:
 
 from broker_ops_report.config import LIVE_INTEGRATIONS_ALLOWED, NETWORK_DEPENDENCIES
 from broker_ops_report.exceptions import detect_exceptions
-from broker_ops_report.reporting import ORDER_EXCEPTION_LOG_HEADERS, SHIFT_SUMMARY_FILENAME
+from broker_ops_report.reporting import (
+    ORDER_EXCEPTION_LOG_HEADERS,
+    SHIFT_SUMMARY_FILENAME,
+    SYMBOL_STATS_FILENAME,
+    SYMBOL_STATS_HEADERS,
+)
 from broker_ops_report.schema import ORDER_EVENT_HEADERS
 
 
@@ -80,6 +85,7 @@ class ExceptionLogReportTests(unittest.TestCase):
             self.assertFalse((output_dir / "by_symbol_trading_stats.csv").exists())
             self.assertFalse((output_dir / "broker_ops_shift_report.md").exists())
             self.assertEqual(list(output_dir.glob("*.xlsx")), [])
+            self.assertEqual(list(output_dir.glob("*.html")), [])
 
     def test_generate_exception_log_validation_failure_does_not_write_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -187,6 +193,91 @@ class ExceptionLogReportTests(unittest.TestCase):
             self.assertFalse((output_dir / "by_symbol_trading_stats.csv").exists())
             self.assertFalse((output_dir / "broker_ops_shift_report.md").exists())
             self.assertEqual(list(output_dir.glob("*.xlsx")), [])
+            self.assertEqual(list(output_dir.glob("*.html")), [])
+
+    def test_generate_symbol_stats_cli_writes_expected_csv(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir)
+
+            result = self.run_cli(
+                "generate-reports",
+                "--report",
+                "symbol-stats",
+                "--orders",
+                str(ORDER_EVENTS),
+                "--market-events",
+                str(MARKET_EVENTS),
+                "--output-dir",
+                str(output_dir),
+            )
+
+            output_path = output_dir / SYMBOL_STATS_FILENAME
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Report generated: symbol-stats", result.stdout)
+            self.assertTrue(output_path.is_file())
+
+            with ORDER_EVENTS.open(newline="", encoding="utf-8") as handle:
+                order_rows = list(csv.DictReader(handle))
+            unique_symbols = sorted({row["symbol"] for row in order_rows})
+
+            with output_path.open(newline="", encoding="utf-8") as handle:
+                reader = csv.DictReader(handle)
+                rows = list(reader)
+
+            self.assertEqual(reader.fieldnames, SYMBOL_STATS_HEADERS)
+            self.assertEqual([row["symbol"] for row in rows], unique_symbols)
+            self.assertEqual(len(rows), len(unique_symbols))
+            self.assertEqual(sum(int(row["total_orders"]) for row in rows), 20)
+            self.assertEqual(sum(int(row["exception_count"]) for row in rows), 14)
+            self.assertEqual(sum(int(row["critical_exception_count"]) for row in rows), 4)
+            self.assertEqual(sum(int(row["warning_exception_count"]) for row in rows), 10)
+
+            numeric_fields = (
+                "total_volume",
+                "average_latency_ms",
+                "max_latency_ms",
+                "total_pnl_usd",
+            )
+            for row in rows:
+                with self.subTest(symbol=row["symbol"]):
+                    self.assertTrue(row["asset_class"])
+                    for field_name in numeric_fields:
+                        float(row[field_name])
+
+            self.assertFalse((output_dir / "order_exception_log.csv").exists())
+            self.assertFalse((output_dir / SHIFT_SUMMARY_FILENAME).exists())
+            self.assertFalse((output_dir / "broker_ops_shift_report.md").exists())
+            self.assertEqual(list(output_dir.glob("*.xlsx")), [])
+            self.assertEqual(list(output_dir.glob("*.html")), [])
+
+    def test_generate_symbol_stats_validation_failure_does_not_write_report(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            bad_orders = tmp_path / "bad_orders.csv"
+            output_dir = tmp_path / "outputs"
+            with ORDER_EVENTS.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+            rows[0]["status"] = "bad_status"
+            with bad_orders.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=ORDER_EVENT_HEADERS)
+                writer.writeheader()
+                writer.writerows(rows)
+
+            result = self.run_cli(
+                "generate-reports",
+                "--report",
+                "symbol-stats",
+                "--orders",
+                str(bad_orders),
+                "--market-events",
+                str(MARKET_EVENTS),
+                "--output-dir",
+                str(output_dir),
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Validation failed.", result.stdout)
+            self.assertFalse((output_dir / SYMBOL_STATS_FILENAME).exists())
 
     def test_generate_shift_summary_is_deterministic(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

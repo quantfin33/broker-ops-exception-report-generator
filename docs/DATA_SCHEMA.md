@@ -130,7 +130,7 @@ Phase 3C detects broker exception types from schema-valid static order rows only
 
 Phase 4A writes `outputs/order_exception_log.csv` only. It is generated from validated static inputs and existing internal exception records. It does not generate a JSON summary, by-symbol statistics, Markdown report, Excel workbook, market-event overlap, duplicate-ID exception reporting, or missing-field exception reporting.
 
-Sequencing note: Phase 3C through Phase 3E define the core exception object pipeline. Duplicate IDs and missing required fields remain validation failures, not exception-log rows. Abnormal symbol activity is deferred to later by-symbol statistics work, and market-event overlap is deferred to later enrichment. Phase 4A can depend on the existing exception objects, but its output remains local work-in-progress until the Phase 3F tracker cleanup is locked.
+Sequencing note: Phase 3C through Phase 3E define the core exception object pipeline. Duplicate IDs and missing required fields remain validation failures, not exception-log rows. Market-event overlap is deferred to later enrichment. Phase 4A depends on the existing exception objects.
 
 | Column | Source |
 | --- | --- |
@@ -144,6 +144,27 @@ Sequencing note: Phase 3C through Phase 3E define the core exception object pipe
 | `bridge_status` | Source bridge status. |
 | `detail` | Deterministic exception detail text. |
 | `recommended_action` | Deterministic operations follow-up text. |
+
+## Phase 4C `by_symbol_trading_stats.csv`
+
+Phase 4C writes `outputs/by_symbol_trading_stats.csv` only. It aggregates validated static order rows by symbol and counts existing exception records by symbol. It does not generate market-event overlap, abnormal-symbol flags, Markdown narrative, Excel, HTML, or live-data references.
+
+| Column | Source |
+| --- | --- |
+| `symbol` | Source symbol. |
+| `asset_class` | First nonblank asset class observed for the symbol. |
+| `total_orders` | Count of source order rows for the symbol. |
+| `filled_orders` | Count where `status` is `filled`. |
+| `rejected_orders` | Count where `status` is `rejected`. |
+| `failed_orders` | Count where `status` is `failed`. |
+| `pending_or_open_orders` | Count where `status` is `received`, `pending_new`, `new`, `transmitted`, or `partially_filled`. |
+| `total_volume` | Sum of numeric `volume` values for the symbol. |
+| `average_latency_ms` | Average of numeric nonblank `latency_ms` values for the symbol. |
+| `max_latency_ms` | Maximum numeric nonblank `latency_ms` value for the symbol. |
+| `total_pnl_usd` | Sum of numeric nonblank `pnl_usd` values for the symbol. |
+| `exception_count` | Count of existing detected exception records for the symbol. |
+| `critical_exception_count` | Count of existing detected `Critical` exception records for the symbol. |
+| `warning_exception_count` | Count of existing detected `Warning` exception records for the symbol. |
 
 ## Non-Claims
 
