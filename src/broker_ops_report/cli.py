@@ -13,6 +13,7 @@ from .config import (
     PROJECT_NAME,
     __version__,
 )
+from .reporting import write_order_exception_log
 from .validation import validate_inputs
 
 
@@ -57,8 +58,27 @@ def _run_validate_inputs(args: argparse.Namespace) -> int:
     return 1
 
 
-def _run_generate_reports(_args: argparse.Namespace) -> int:
-    return _placeholder_command("generate-reports")
+def _print_validation_failure(result) -> None:
+    print("Validation failed.")
+    for issue in result.issues:
+        print(f"- {issue.format()}")
+    print(NO_LIVE_INTEGRATIONS_MESSAGE)
+
+
+def _run_generate_reports(args: argparse.Namespace) -> int:
+    if args.report != "exception-log":
+        return _placeholder_command("generate-reports")
+
+    result = write_order_exception_log(args.orders, args.market_events, args.output_dir)
+    if not result.validation.ok:
+        _print_validation_failure(result.validation)
+        return 1
+
+    print("Report generated: exception-log")
+    print(f"Output path: {result.output_path}")
+    print(f"Exception rows: {result.exception_count}")
+    print(NO_LIVE_INTEGRATIONS_MESSAGE)
+    return 0
 
 
 def _run_demo(_args: argparse.Namespace) -> int:
@@ -91,14 +111,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     generate_reports = subparsers.add_parser(
         "generate-reports",
-        help="Generate broker operations report outputs. Placeholder only in Phase 1.",
-        description="Generate broker operations report outputs. Placeholder only in Phase 1.",
+        help="Generate broker operations report outputs.",
+        description="Generate broker operations report outputs from static validated inputs.",
     )
     _add_common_input_options(generate_reports)
     generate_reports.add_argument(
+        "--report",
+        choices=("exception-log",),
+        help="Report to generate. Phase 4A supports only exception-log.",
+    )
+    generate_reports.add_argument(
         "--output-dir",
         default=DEFAULT_OUTPUT_DIR,
-        help="Directory for generated report artifacts. Placeholder only in Phase 1.",
+        help="Directory for generated report artifacts.",
     )
     generate_reports.set_defaults(handler=_run_generate_reports)
 
