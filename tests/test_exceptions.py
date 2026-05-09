@@ -17,7 +17,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from broker_ops_report.config import LIVE_INTEGRATIONS_ALLOWED, NETWORK_DEPENDENCIES
-from broker_ops_report.exceptions import BrokerException, detect_exceptions
+from broker_ops_report.exceptions import BrokerException, classify_severity, detect_exceptions
 
 
 class BrokerExceptionDetectionTests(unittest.TestCase):
@@ -53,6 +53,8 @@ class BrokerExceptionDetectionTests(unittest.TestCase):
         self.assertGreater(len(self.exceptions), 0)
         for exception in self.exceptions:
             with self.subTest(exception=exception):
+                self.assertIsInstance(exception.severity, str)
+                self.assertTrue(exception.severity)
                 self.assertIsInstance(exception.event_id, str)
                 self.assertTrue(exception.event_id)
                 self.assertIsInstance(exception.symbol, str)
@@ -64,10 +66,37 @@ class BrokerExceptionDetectionTests(unittest.TestCase):
                 self.assertIsInstance(exception.detail, str)
                 self.assertTrue(exception.detail)
 
-    def test_no_severity_field_exists_yet(self) -> None:
+    def test_received_not_transmitted_severity_is_critical(self) -> None:
+        self.assertEqual(classify_severity("received_not_transmitted"), "Critical")
+
+    def test_transmitted_no_final_status_severity_is_critical(self) -> None:
+        self.assertEqual(classify_severity("transmitted_no_final_status"), "Critical")
+
+    def test_bridge_failed_or_disconnected_severity_is_critical(self) -> None:
+        self.assertEqual(classify_severity("bridge_failed_or_disconnected"), "Critical")
+
+    def test_rejected_without_reason_severity_is_warning(self) -> None:
+        self.assertEqual(classify_severity("rejected_without_reason"), "Warning")
+
+    def test_high_latency_severity_is_warning(self) -> None:
+        self.assertEqual(classify_severity("high_latency"), "Warning")
+
+    def test_pending_follow_up_severity_is_warning(self) -> None:
+        self.assertEqual(classify_severity("pending_follow_up"), "Warning")
+
+    def test_unknown_exception_type_severity_defaults_to_info(self) -> None:
+        self.assertEqual(classify_severity("unknown_exception_type"), "Info")
+
+    def test_all_canonical_fixture_exceptions_include_severity(self) -> None:
+        self.assertGreater(len(self.exceptions), 0)
+        for exception in self.exceptions:
+            with self.subTest(exception=exception):
+                self.assertIn(exception.severity, {"Critical", "Warning", "Info"})
+
+    def test_severity_field_exists(self) -> None:
         field_names = {field.name for field in fields(BrokerException)}
 
-        self.assertNotIn("severity", field_names)
+        self.assertIn("severity", field_names)
 
     def test_no_recommended_action_field_exists_yet(self) -> None:
         field_names = {field.name for field in fields(BrokerException)}

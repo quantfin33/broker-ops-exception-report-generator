@@ -10,12 +10,24 @@ from typing import Iterable
 
 HIGH_LATENCY_THRESHOLD_MS = 2000
 
+SEVERITY_BY_EXCEPTION_TYPE = {
+    "bridge_failed_or_disconnected": "Critical",
+    "transmitted_no_final_status": "Critical",
+    "received_not_transmitted": "Critical",
+    "rejected_without_reason": "Warning",
+    "high_latency": "Warning",
+    "pending_follow_up": "Warning",
+}
+
+DEFAULT_SEVERITY = "Info"
+
 
 @dataclass(frozen=True)
 class BrokerException:
-    """A detected broker operations exception type without ranking or actions."""
+    """A detected broker operations exception type without recommended actions."""
 
     exception_type: str
+    severity: str
     event_id: str
     client_order_id: str
     server_order_id: str
@@ -111,6 +123,7 @@ def _detect_row_exceptions(row: dict[str, str]) -> list[BrokerException]:
 def _make_exception(row: dict[str, str], exception_type: str, detail: str) -> BrokerException:
     return BrokerException(
         exception_type=exception_type,
+        severity=classify_severity(exception_type),
         event_id=_value(row, "event_id"),
         client_order_id=_value(row, "client_order_id"),
         server_order_id=_value(row, "server_order_id"),
@@ -119,6 +132,12 @@ def _make_exception(row: dict[str, str], exception_type: str, detail: str) -> Br
         bridge_status=_value(row, "bridge_status"),
         detail=detail,
     )
+
+
+def classify_severity(exception_type: str) -> str:
+    """Return deterministic severity for an exception type."""
+
+    return SEVERITY_BY_EXCEPTION_TYPE.get(exception_type, DEFAULT_SEVERITY)
 
 
 def _parse_number(value: str) -> float | None:

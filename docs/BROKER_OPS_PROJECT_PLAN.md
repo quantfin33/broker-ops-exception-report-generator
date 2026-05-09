@@ -30,6 +30,7 @@ The project must be framed as a broker operations reporting demo. It is not a tr
 - [x] Sample broker-style CSV data created.
 - [x] CSV schema validation implemented.
 - [x] Phase 3C broker exception type detection implemented.
+- [x] Phase 3D severity classification implemented.
 - [ ] Remaining exception enrichments implemented.
 - [ ] Reports generated.
 - [ ] Tests added and passing.
@@ -198,7 +199,7 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
   - missing required field exception type;
   - abnormal symbol activity;
   - market-event overlap.
-- [ ] Assign severity: `Critical`, `Warning`, or `Info`.
+- [x] Assign severity: `Critical`, `Warning`, or `Info`.
 - [ ] Attach recommended action for each exception.
 
 ### Phase 4 - Report Outputs

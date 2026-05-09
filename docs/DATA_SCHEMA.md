@@ -104,16 +104,16 @@ These rows are deliberate fixture cases for later tests:
 
 ## Phase 3C Exception Type Definitions
 
-Phase 3C detects broker exception types from schema-valid static order rows only. It does not assign severity, attach recommended actions, aggregate by symbol, match market events, or generate report files.
+Phase 3C detects broker exception types from schema-valid static order rows only. Phase 3D adds deterministic severity classification for those same exception types. The project still does not attach recommended actions, aggregate by symbol, match market events, or generate report files.
 
-| Exception type | Deterministic rule |
-| --- | --- |
-| `received_not_transmitted` | `status` is `received` or `pending_new`, `order_received_time_utc` is present, and `order_transmitted_time_utc` is blank. |
-| `transmitted_no_final_status` | `status` is `transmitted` or `new`, `order_transmitted_time_utc` is present, and `final_status_time_utc` is blank. |
-| `rejected_without_reason` | `status` is `rejected` and `reject_reason` is blank. |
-| `bridge_failed_or_disconnected` | `bridge_status` is `failed` or `disconnected`. |
-| `high_latency` | `latency_ms` is numeric and greater than `2000`. |
-| `pending_follow_up` | `status` is `pending_new`, `transmitted`, or `new`, and `final_status_time_utc` is blank. |
+| Exception type | Severity | Deterministic rule |
+| --- | --- | --- |
+| `received_not_transmitted` | `Critical` | `status` is `received` or `pending_new`, `order_received_time_utc` is present, and `order_transmitted_time_utc` is blank. |
+| `transmitted_no_final_status` | `Critical` | `status` is `transmitted` or `new`, `order_transmitted_time_utc` is present, and `final_status_time_utc` is blank. |
+| `bridge_failed_or_disconnected` | `Critical` | `bridge_status` is `failed` or `disconnected`. |
+| `rejected_without_reason` | `Warning` | `status` is `rejected` and `reject_reason` is blank. |
+| `high_latency` | `Warning` | `latency_ms` is numeric and greater than `2000`. |
+| `pending_follow_up` | `Warning` | `status` is `pending_new`, `transmitted`, or `new`, and `final_status_time_utc` is blank. |
 
 ## `sample_market_events.csv`
 

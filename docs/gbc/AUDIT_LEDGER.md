@@ -49,3 +49,11 @@ This ledger records completed Guided Build Cycle checkpoints. Keep entries conci
 - Safety result: Static/demo-only boundary preserved; no severity classification, recommended actions, broker reports, by-symbol statistics, market-event overlap logic, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, or credential dependency added.
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 48 tests; `validate-inputs` succeeded against current fixtures; root help and `validate-inputs --help` returned exit code 0; project-plan PDF regenerated.
 - Next task: After Phase 3C review, start Phase 3D only: severity classification and recommended-action mapping, if approved.
+
+## 2026-05-09 - Phase 3D Severity Classification
+
+- Task: Add deterministic severity classification to the six existing broker exception types.
+- Scope: `severity` field on internal broker exception records, severity mapping tests, schema documentation, Phase 3D checklist updates, project-plan PDF regeneration, and GBC records.
+- Safety result: Static/demo-only boundary preserved; no recommended actions, broker reports, by-symbol statistics, market-event overlap logic, duplicate-ID exception reporting, missing-field exception reporting, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, or credential dependency added.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 56 tests; `validate-inputs` succeeded against current fixtures; root help and `validate-inputs --help` returned exit code 0; project-plan PDF regenerated.
+- Next task: After Phase 3D review, start Phase 3E only: recommended-action mapping for existing typed/severity-classified exceptions, if approved.
