@@ -1,0 +1,22 @@
+Broker Operations Exception Report Generator - Outputs Manifest
+
+outputs/order_exception_log.csv
+Purpose: row-level operational exception log.
+Evidence: 14 data rows, each with exception type, severity, detail, and recommended action.
+
+outputs/broker_ops_shift_summary.json
+Purpose: machine-readable shift summary.
+Evidence: 20 order rows, 5 market-event rows, 14 exceptions, and severity counts of Critical 4, Warning 10, Info 0.
+
+outputs/by_symbol_trading_stats.csv
+Purpose: by-symbol operating statistics.
+Evidence: 6 symbol rows; total_orders sums to 20 and exception_count sums to 14.
+
+outputs/broker_ops_shift_report.md
+Purpose: human-readable broker operations shift report.
+Evidence: includes input files, order activity, exception summary, severity breakdown, items requiring review, by-symbol summary, shift handover notes, and limitations/non-claims.
+
+outputs/Broker_Ops_Exception_Report_Project_Plan.pdf
+Purpose: project plan and progress tracker.
+Evidence: records the completed guided build path and deferred items.
+

@@ -1,0 +1,38 @@
+Excerpt from outputs/broker_ops_shift_report.md
+
+Order activity summary
+- Order rows: 20
+- Market-event rows: 5
+- Symbols monitored: 6
+- Filled orders: 7
+- Rejected orders: 4
+- Failed orders: 2
+- Pending/open orders: 5
+
+Exception summary
+- Total exceptions: 14
+- received_not_transmitted: 1
+- transmitted_no_final_status: 1
+- rejected_without_reason: 1
+- bridge_failed_or_disconnected: 2
+- high_latency: 7
+- pending_follow_up: 2
+
+Severity breakdown
+- Critical: 4
+- Warning: 10
+- Info: 0
+
+Shift handover notes
+- Carry forward unresolved exception items: 4
+- Critical exceptions requiring immediate review: 4
+- Confirm pending/open orders reach a final status or are otherwise resolved.
+- Review symbols with concentrated exceptions using the by-symbol summary.
+
+Limitations / non-claims
+- Static sample data only.
+- No real client/account data.
+- No live broker connection.
+- No MT4/MT5 admin access.
+- No execution or trading bot.
+

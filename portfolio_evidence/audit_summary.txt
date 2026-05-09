@@ -1,0 +1,30 @@
+Broker Operations Exception Report Generator - Audit Summary
+Date: 2026-05-09
+
+Scope
+Static Python portfolio demo for broker operations and trading-risk support.
+The project validates synthetic broker-style CSV inputs and generates
+deterministic CSV, JSON, and Markdown reports.
+
+Current evidence
+- Tests passing: 76
+- Order rows: 20
+- Market-event rows: 5
+- Exception rows: 14
+- Severity breakdown: Critical 4, Warning 10, Info 0
+- By-symbol rows: 6
+- By-symbol total orders: 20
+- Excel output: not generated
+- HTML output: not generated
+
+Safety boundary
+- Static sample data only.
+- No real client/account data.
+- No live broker connection.
+- No MT4/MT5 admin access.
+- No FIX venue connection.
+- No broker bridge integration.
+- No trade execution.
+- Not a trading bot.
+- Not production risk infrastructure.
+
