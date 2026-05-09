@@ -1,0 +1,104 @@
+{
+  "project_name": "Broker Operations Exception Report Generator",
+  "generated_at_utc": "2026-05-09T00:00:00Z",
+  "input_files": {
+    "orders": "data/sample_order_events.csv",
+    "market_events": "data/sample_market_events.csv"
+  },
+  "validation_summary": {
+    "validation_passed": true,
+    "validation_error_count": 0,
+    "duplicate_id_failures": 0,
+    "missing_required_field_failures": 0,
+    "note": "Duplicate IDs and missing required fields are validation failures, not exception-log rows."
+  },
+  "order_summary": {
+    "total_order_rows": 20,
+    "total_market_event_rows": 5,
+    "symbols_count": 6,
+    "routes_count": 4,
+    "liquidity_providers_count": 4
+  },
+  "exception_summary": {
+    "total_exceptions": 14,
+    "severity_breakdown": {
+      "Critical": 4,
+      "Warning": 10,
+      "Info": 0
+    },
+    "exception_type_breakdown": {
+      "received_not_transmitted": 1,
+      "transmitted_no_final_status": 1,
+      "rejected_without_reason": 1,
+      "bridge_failed_or_disconnected": 2,
+      "high_latency": 7,
+      "pending_follow_up": 2
+    },
+    "highest_severity_present": "Critical",
+    "unresolved_exception_count": 4
+  },
+  "severity_breakdown": {
+    "Critical": 4,
+    "Warning": 10,
+    "Info": 0
+  },
+  "exception_type_breakdown": {
+    "received_not_transmitted": 1,
+    "transmitted_no_final_status": 1,
+    "rejected_without_reason": 1,
+    "bridge_failed_or_disconnected": 2,
+    "high_latency": 7,
+    "pending_follow_up": 2
+  },
+  "unresolved_items": [
+    {
+      "event_id": "evt_0003",
+      "exception_type": "received_not_transmitted",
+      "severity": "Critical",
+      "symbol": "XAUUSD",
+      "status": "received",
+      "detail": "Order was received by the platform but has no transmission timestamp.",
+      "recommended_action": "Review platform queue/routing state and confirm whether the order should be transmitted, cancelled, or escalated."
+    },
+    {
+      "event_id": "evt_0004",
+      "exception_type": "transmitted_no_final_status",
+      "severity": "Critical",
+      "symbol": "BTCUSD",
+      "status": "transmitted",
+      "detail": "Order was transmitted but has no final status timestamp.",
+      "recommended_action": "Check downstream execution/bridge response and follow up until a final fill, reject, cancel, fail, or expiry status is recorded."
+    },
+    {
+      "event_id": "evt_0004",
+      "exception_type": "pending_follow_up",
+      "severity": "Warning",
+      "symbol": "BTCUSD",
+      "status": "transmitted",
+      "detail": "Order state is unresolved and has no final status timestamp.",
+      "recommended_action": "Carry forward to shift handover and confirm the order reaches a final status or is otherwise resolved."
+    },
+    {
+      "event_id": "evt_0010",
+      "exception_type": "pending_follow_up",
+      "severity": "Warning",
+      "symbol": "XAUUSD",
+      "status": "pending_new",
+      "detail": "Order state is unresolved and has no final status timestamp.",
+      "recommended_action": "Carry forward to shift handover and confirm the order reaches a final status or is otherwise resolved."
+    }
+  ],
+  "output_files": {
+    "order_exception_log": "outputs/order_exception_log.csv",
+    "shift_summary": "outputs/broker_ops_shift_summary.json"
+  },
+  "non_claims": [
+    "Static broker operations reporting demo only.",
+    "Does not perform live trading.",
+    "Does not integrate with broker APIs.",
+    "Does not integrate with MT4/MT5.",
+    "Does not perform live monitoring.",
+    "Does not prove broker administrator access.",
+    "Not investment or trading advice."
+  ]
+}

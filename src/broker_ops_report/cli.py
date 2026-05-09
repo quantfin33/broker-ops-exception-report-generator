@@ -13,7 +13,7 @@ from .config import (
     PROJECT_NAME,
     __version__,
 )
-from .reporting import write_order_exception_log
+from .reporting import write_broker_ops_shift_summary, write_order_exception_log
 from .validation import validate_inputs
 
 
@@ -66,17 +66,24 @@ def _print_validation_failure(result) -> None:
 
 
 def _run_generate_reports(args: argparse.Namespace) -> int:
-    if args.report != "exception-log":
+    if args.report is None:
         return _placeholder_command("generate-reports")
 
-    result = write_order_exception_log(args.orders, args.market_events, args.output_dir)
+    if args.report == "exception-log":
+        result = write_order_exception_log(args.orders, args.market_events, args.output_dir)
+    else:
+        result = write_broker_ops_shift_summary(args.orders, args.market_events, args.output_dir)
+
     if not result.validation.ok:
         _print_validation_failure(result.validation)
         return 1
 
-    print("Report generated: exception-log")
+    print(f"Report generated: {args.report}")
     print(f"Output path: {result.output_path}")
     print(f"Exception rows: {result.exception_count}")
+    if hasattr(result, "order_count"):
+        print(f"Order rows: {result.order_count}")
+        print(f"Market event rows: {result.market_event_count}")
     print(NO_LIVE_INTEGRATIONS_MESSAGE)
     return 0
 
@@ -117,8 +124,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common_input_options(generate_reports)
     generate_reports.add_argument(
         "--report",
-        choices=("exception-log",),
-        help="Report to generate. Phase 4A supports only exception-log.",
+        choices=("exception-log", "shift-summary"),
+        help="Report to generate. Phase 4A supports exception-log; Phase 4B supports shift-summary.",
     )
     generate_reports.add_argument(
         "--output-dir",
