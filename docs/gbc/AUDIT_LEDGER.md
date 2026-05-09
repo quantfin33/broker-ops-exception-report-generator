@@ -89,3 +89,11 @@ This ledger records completed Guided Build Cycle checkpoints. Keep entries conci
 - Safety result: Static/demo-only boundary preserved; no source code, tests, `order_exception_log.csv`, Phase 4B/4C/4D output, README, live API, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency changed.
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 69 tests; root help returned exit code 0; project-plan PDF regenerated; staged files were inspected before commit.
 - Next task: Start Phase 4B only: shift summary JSON.
+
+## 2026-05-09 - Phase 4B.1 Tracker Sync
+
+- Task: Mark Phase 4B shift summary JSON output as locked after commit `9fe00ff`.
+- Scope: tracker wording, audit ledger entry, GBC records, and project-plan PDF regeneration.
+- Safety result: Static/demo-only boundary preserved; no source code, tests, `order_exception_log.csv`, `broker_ops_shift_summary.json`, Phase 4C/4D output, README, live API, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency changed.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 72 tests; root help returned exit code 0; project-plan PDF regenerated; staged files were inspected before commit.
+- Next task: Start Phase 4C only: by-symbol trading stats CSV.

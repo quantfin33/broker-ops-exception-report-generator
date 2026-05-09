@@ -34,6 +34,7 @@ The project must be framed as a broker operations reporting demo. It is not a tr
 - [x] Phase 3D severity classification implemented.
 - [x] Phase 3E recommended action mapping implemented.
 - [x] Phase 4A exception log output locked.
+- [x] Phase 4B shift summary JSON output locked.
 - [ ] Later exception/reporting enrichments implemented.
 - [ ] Reports generated.
 - [ ] Tests added and passing.
@@ -205,7 +206,7 @@ The audit system is local and gated. It does not auto-merge, auto-deploy, or giv
 
 ### Phase 4 - Report Outputs
 
-- [ ] Generate `outputs/broker_ops_shift_summary.json`.
+- [x] Generate `outputs/broker_ops_shift_summary.json`.
 - [ ] Generate `outputs/by_symbol_trading_stats.csv`.
 - [x] Generate `outputs/order_exception_log.csv`.
 - [ ] Generate `outputs/broker_ops_shift_report.md`.
