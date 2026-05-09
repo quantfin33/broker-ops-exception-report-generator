@@ -74,10 +74,18 @@ This ledger records completed Guided Build Cycle checkpoints. Keep entries conci
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 69 tests; root help returned exit code 0; tracker text was inspected for Phase 3F sequencing, deferred enrichments, and Phase 4A local/unlocked wording; project-plan PDF regenerated.
 - Next task: Phase 3F.5 pre-commit audit and commit, then Phase 4A.5 audit and commit if approved.
 
-## 2026-05-09 - Phase 4A Exception Log Output (Local Work In Progress)
+## 2026-05-09 - Phase 4A Exception Log Output
 
 - Task: Generate `outputs/order_exception_log.csv` from validated inputs and existing exception records.
 - Scope: standard-library exception-log writer, `generate-reports --report exception-log`, focused output tests, schema documentation, Phase 4A checklist updates, project-plan PDF regeneration, and GBC records.
 - Safety result: Static/demo-only boundary preserved; no JSON summary, by-symbol statistics, Markdown report, Excel output, HTML output, market-event overlap logic, duplicate-ID exception reporting, missing-field exception reporting, pandas, external dependencies, live APIs, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency added.
 - Verification: `PYTHONPATH=src python3 -m unittest discover` passed 69 tests; `validate-inputs` succeeded against current fixtures; `generate-reports --report exception-log` wrote 14 exception rows; root help and `generate-reports --help` returned exit code 0; project-plan PDF regenerated.
-- Next task: Pause Phase 4A commit until Phase 3F tracker cleanup is locked.
+- Next task: Start Phase 4A.6 tracker sync, then Phase 4B shift summary JSON if approved.
+
+## 2026-05-09 - Phase 4A.6 Tracker Sync
+
+- Task: Mark Phase 4A exception log output as locked after commit `ec814d1`.
+- Scope: tracker wording, audit ledger entry, GBC records, and project-plan PDF regeneration.
+- Safety result: Static/demo-only boundary preserved; no source code, tests, `order_exception_log.csv`, Phase 4B/4C/4D output, README, live API, MT4/MT5, FIX, bridge, Binance, Telegram, TradingView, account, credential, `.env`, or browser-session dependency changed.
+- Verification: `PYTHONPATH=src python3 -m unittest discover` passed 69 tests; root help returned exit code 0; project-plan PDF regenerated; staged files were inspected before commit.
+- Next task: Start Phase 4B only: shift summary JSON.
